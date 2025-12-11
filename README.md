@@ -1,3 +1,5 @@
+
+---
 # Dashboard - Évolution de la Pollution Mondiale
 
 ## User Guide
@@ -47,7 +49,7 @@ npm run serve
 - **Filtres** : Sélectionnez les pays, années ou types de polluants pour affiner les visualisations
 - **Export** : Cliquez sur l'icône de téléchargement pour exporter les graphiques en format PNG/PDF
 
----
+****
 
 ## Data
 
@@ -63,7 +65,7 @@ Les données utilisées proviennent de sources officielles et reconnues :
     - URL : https://public.opendatasoft.com/explore/assets/openaq/?flg=fr-fr
 
 ### Structure des données
-****
+---
 Les fichiers de données sont organisés dans le dossier `/data` :
 
 ```
@@ -83,7 +85,7 @@ Les fichiers de données sont organisés dans le dossier `/data` :
 - **O3** : Ozone (µg/m³)
 - **CO2** : Émissions de dioxyde de carbone (tonnes)
 
----
+****
 
 ## Developer Guide
 
@@ -143,7 +145,7 @@ data_project
 - **Commentaires** : Documentation des fonctions complexes
 - **Commits** : Messages clairs et descriptifs
 
----
+****
 ## Rapport d'analyse
 
 ### Principales conclusions
@@ -184,7 +186,7 @@ data_project
 - Données manquantes pour certaines régions africaines et océaniques
 - Difficulté à isoler l'impact de mesures spécifiques (multi-causalité)
 
----
+****
 
 ## Copyright
 
