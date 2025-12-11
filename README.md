@@ -1,5 +1,3 @@
-
----
 # Dashboard - Évolution de la Pollution Mondiale
 
 ## User Guide
