@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Trade+Winds&display=swap');
+
+html {
+    color: #005093;
+    font-family: 'Montserrat', sans-serif;
+}
+
+#year-slider {
+    width: 50rem  !important;
+}
+
+#year-slider .rc-slider-track {
+    background-color: #005093 !important;
+}
+
+#year-slider .rc-slider-handle {
+    border-color: #FFF !important;
+    background-color: #005093 !important;
+}
+
+#year-slider .rc-slider-handle:hover {
+    border-color: #003d73 !important;
+}
+
+#year-slider .rc-slider-rail {
+    background-color: #d3d3d3 !important;
+}
+
+.valeur-mesuree {
+    font-weight: lighter;
+    font-size: medium;
+}
+
+
+p {
+    font-weight: 200;
+    font-size: xx-small;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+    border-bottom: 1px dotted #005093;
+    cursor: help;
+    font-weight: 200;
+    font-size: xx-small;
+}
+
+.legend {
+    display: flex;
+    flex-direction: column;
+}
+
+.tooltiptext {
+    visibility: hidden;
+    width: 300px;
+    background-color: #333;
+    color: #fff;
+    text-align: center;
+    font-weight: 200;
+    font-size: xx-small;
+    padding: 10px;
+    border-radius: 6px;
+
+    position: absolute;
+    z-index: 1000;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -150px;
+
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.tooltiptext::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
