@@ -3,6 +3,8 @@
 html {
     color: #005093;
     font-family: 'Montserrat', sans-serif;
+    margin: 0;
+    padding: 0;
 }
 
 #year-slider {
@@ -87,3 +89,49 @@ p {
     visibility: visible;
     opacity: 1;
 }
+
+.below-map {
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+.top-map, .btm-map {
+    width: 100%;
+}
+
+button {
+    background: none;
+    border: none;
+    width: 10rem;
+    height: 3rem;
+    border-radius: 10px;
+    color: #005093;
+}
+
+button:hover {
+    background: #DCEAF2;
+}
+
+.legende, .buttons-polluants {
+    margin: 2rem;
+}
+
+.ranking {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+table {
+    border: 1px solid #003d73;
+    border-radius: 10px;
+    margin: 2rem;
+}
+
+tr, td, th {
+    padding: 1rem 3rem;
+    text-align: center;
+}
+

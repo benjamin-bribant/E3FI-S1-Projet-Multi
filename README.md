@@ -107,19 +107,17 @@ data_project
 |-- src                                      # le code source du dashboard
 |   |-- components                           # les composants du dashboard
 |   |   |-- __init__.py
-|   |   |-- component1.py
-|   |   |-- component2.py
+|   |   |-- component.py
 |   |   |-- footer.py
 |   |   |-- header.py
 |   |   |-- navbar.py
 |   |-- pages                                # les pages du dashboard
+|   |   |-- assets
+|   |   |   |-- style.css
 |   |   |-- __init__.py
-|   |   |-- simple_page.py
-|   |   |-- more_complex_page
-|   |   |   |-- __init__.py
-|   |   |   |-- layout.py
-|   |   |   |-- page_specific_component.py
 |   |   |-- home.py
+|   |   |-- carte.py
+|   |   |-- index.py
 |   |   |-- about.py
 |   |-- utils                                # les fonctions utilitaires
 |   |   |-- __init__.py

@@ -1,4 +1,6 @@
 from dash import Dash, dcc, html
+from src.components.footer import create_footer
+
 
 app = Dash()
 
@@ -70,8 +72,57 @@ app.layout = html.Div([
                 )
             ], className='tooltip'),
         ], className='legende'),
-    ], style={'display': 'flex', 'justify-content':'center'}),
+        html.Div([
+            html.Div([
+                html.Button('PM2.5', id='', n_clicks=0),
+                html.Button('PM10', id='', n_clicks=0),
+                html.Button('CO', id='', n_clicks=0),
+            ]),
+            html.Div([
+                html.Button('NO2', id='', n_clicks=0),
+                html.Button('SO2', id='', n_clicks=0),
+                html.Button('O3', id='', n_clicks=0),
+            ]),
+        ], className="buttons-polluants")
+    ], style={'display': 'flex', 'justify-content':'center'}, className="below-map"),
     
+    html.Div([
+        html.Table([
+            html.Thead([
+                html.Tr([
+                    html.Th(""),
+                    html.Th("Pays"),
+                    html.Th("Unité"),
+                    html.Th("Valeur"),
+                    html.Th("Date"),
+                ])
+            ]),
+            html.Tbody([
+                html.Tr([
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                ]),
+                html.Tr([
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                ]),
+                html.Tr([
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                    html.Td("Pays 1"),
+                ]),
+            ])
+        ],)
+    ], className="ranking"),
+    create_footer()
 ])
 
 if __name__ == '__main__':

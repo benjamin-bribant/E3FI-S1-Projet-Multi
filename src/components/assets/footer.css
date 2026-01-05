@@ -1,0 +1,19 @@
+footer {
+    background-color: #005093;
+    color: white;
+    padding: 2rem;
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+}
+
+footer div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+footer div p {
+    padding: 0;
+}
