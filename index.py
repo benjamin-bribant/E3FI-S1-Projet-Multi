@@ -313,7 +313,13 @@ def play_pause(play_clicks, pause_clicks):
     [Output('carte', 'figure'),
      Output('nb-pays', 'children'),
      Output('polluant', 'children'),
-     Output('ranking-table', 'children')],
+     # Ajouter les outputs pour les styles
+     Output('btn-pm25', 'style'),
+     Output('btn-pm10', 'style'),
+     Output('btn-co', 'style'),
+     Output('btn-no2', 'style'),
+     Output('btn-so2', 'style'),
+     Output('btn-o3', 'style')],
     [Input('year-slider', 'value'),
      Input('btn-pm25', 'n_clicks'),
      Input('btn-pm10', 'n_clicks'),
@@ -325,7 +331,10 @@ def play_pause(play_clicks, pause_clicks):
 def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, so2_clicks, o3_clicks):
     """Met à jour la carte en fonction de l'année et des polluants sélectionnés"""
     
-    global selected_pollutants
+    # Initialiser la liste des polluants sélectionnés
+    if 'selected_pollutants' not in globals():
+        global selected_pollutants
+        selected_pollutants = set()
     
     # Déterminer quel bouton a été cliqué
     if ctx.triggered:
@@ -354,10 +363,6 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
     data_filtered = data[data['measurements_lastupdated'].dt.year == selected_year]
     
-    # Filtrer par polluants si sélectionnés
-    if pollutants_to_show:
-        data_filtered = data_filtered[data_filtered['measurements_parameter'].isin(pollutants_to_show)]
-    
     # Calculer le nombre de pays uniques
     nb_pays = data_filtered['country'].nunique()
     
@@ -367,51 +372,32 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     else:
         polluant_text = "Tous"
     
-    # Calculer le top 10 des pays les plus pollués
-    top_countries = data_filtered.groupby(['country', 'country_name_en']).agg({
-        'measurements_value': 'mean',
-        'measurements_unit': 'first',
-        'measurements_lastupdated': 'max'
-    }).reset_index()
-    
-    top_countries = top_countries.sort_values('measurements_value', ascending=False).head(5)
-    
-    # Créer le tableau HTML
-    table_rows = []
-    for idx, row in top_countries.iterrows():
-        rank = len(table_rows) + 1
-        country_name = row['country_name_en'] if pd.notna(row['country_name_en']) else row['country']
-        unit = row['measurements_unit'] if pd.notna(row['measurements_unit']) else 'µg/m³'
-        value = f"{row['measurements_value']:.2f}"
-        pd.utc=True 
-        date = pd.to_datetime(row['measurements_lastupdated']).strftime('%d/%m/%Y')
-        
-        table_rows.append(
-            html.Tr([
-                html.Td(f"#{rank}"),
-                html.Td(country_name),
-                html.Td(unit),
-                html.Td(value),
-                html.Td(date),
-            ])
-        )
-    
-    ranking_table = html.Table([
-        html.Thead([
-            html.Tr([
-                html.Th("Rang"),
-                html.Th("Pays"),
-                html.Th("Unité"),
-                html.Th("Valeur moyenne"),
-                html.Th("Dernière mesure"),
-            ])
-        ]),
-        html.Tbody(table_rows)
-    ])
-    
     fig = create_map(year=selected_year, selected_pollutants=pollutants_to_show)
     
-    return fig, str(nb_pays), polluant_text, ranking_table
+    # Créer les styles pour chaque bouton
+    def get_button_style(pollutant):
+        color = get_color_by_pollutant(pollutant)
+        is_selected = pollutant in selected_pollutants
+        
+        return {
+            'backgroundColor': color if is_selected else 'white',
+            'color': 'white' if is_selected else color,
+            'border': f'2px solid {color}',
+            'fontWeight': 'bold' if is_selected else 'normal',
+            'transition': 'all 0.3s ease'
+        }
+    
+    # Générer les styles dans l'ordre des outputs
+    styles = [
+        get_button_style('PM2.5'),
+        get_button_style('PM10'),
+        get_button_style('CO'),
+        get_button_style('NO2'),
+        get_button_style('SO2'),
+        get_button_style('O3')
+    ]
+    
+    return fig, str(nb_pays), polluant_text, *styles
 
 if __name__ == '__main__':
     app.run(debug=True)

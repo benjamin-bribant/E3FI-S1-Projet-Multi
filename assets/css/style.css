@@ -100,17 +100,8 @@ p {
     width: 100%;
 }
 
-button {
-    background: none;
-    border: none;
-    width: 10rem;
-    height: 3rem;
-    border-radius: 10px;
-    color: #005093;
-}
-
-button:hover {
-    background: #DCEAF2;
+#nb-pays, #polluant {
+    text-align: center;
 }
 
 .legende, .buttons-polluants {
