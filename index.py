@@ -42,7 +42,8 @@ def get_pollution_level(pollutant, value):
 
 def create_map(year=None, selected_pollutants=None):
     """Crée la carte Plotly avec fond bleu et points de pollution"""
-    data = gpd.read_file("data/cleaned/cleaneddata.geojson")  
+    data = gpd.read_file("data/cleaned/cleaneddata.geojson")
+    pd.utc=True  
 
     if year is not None:
         data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
@@ -179,17 +180,32 @@ def create_map(year=None, selected_pollutants=None):
 
 app = Dash()
 
+# Variable globale pour stocker les polluants sélectionnés
+selected_pollutants = set()
+
 app.layout = html.Div([
     html.H1("Dashboard - World Air Quality", style={'text-align':'center'}, className="page-title"),
     html.Div([
         dcc.Slider(
             min=2016, 
             max=2025,
-            value=2020, 
+            value=2016, 
             step=1,
             marks={i: str(i) for i in range(2016, 2026)},
             id="year-slider",
             className="custom-slider"
+        ),
+
+        html.Div([
+            html.Button("Play", id="play-btn", n_clicks=0),
+            html.Button("Pause", id="pause-btn", n_clicks=0),
+        ]),
+
+        dcc.Interval(
+            id="interval",
+            interval=10000,
+            n_intervals=0,
+            max_intervals=-1  
         ),
     ], style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
     
@@ -306,6 +322,28 @@ app.layout = html.Div([
     create_footer()
 ])
 
+# Callback pour l'animation du slider
+@app.callback(
+    Output('year-slider', 'value'),
+    [Input('interval', 'n_intervals')],
+    prevent_initial_call=False
+)
+def animate_slider(n):
+    years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
+    if n is None:
+        return years[0]
+    return years[n % len(years)]
+
+@app.callback(
+    Output("interval", "disabled"),
+    Input("play-btn", "n_clicks"),
+    Input("pause-btn", "n_clicks"),
+)
+def play_pause(play_clicks, pause_clicks):
+    if play_clicks > pause_clicks:
+        return False 
+    return True       
+
 @app.callback(
     [Output('carte', 'figure'),
      Output('nb-pays', 'children'),
@@ -318,14 +356,10 @@ app.layout = html.Div([
      Input('btn-so2', 'n_clicks'),
      Input('btn-o3', 'n_clicks')]
 )
-
 def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, so2_clicks, o3_clicks):
     """Met à jour la carte en fonction de l'année et des polluants sélectionnés"""
     
-    # Initialiser la liste des polluants sélectionnés
-    if 'selected_pollutants' not in globals():
-        global selected_pollutants
-        selected_pollutants = set()
+    global selected_pollutants
     
     # Déterminer quel bouton a été cliqué
     if ctx.triggered:
