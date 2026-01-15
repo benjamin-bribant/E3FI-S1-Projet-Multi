@@ -4,7 +4,7 @@ import geopandas as gpd
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import pycountry  # Pour convertir ISO-2 en ISO-3
+import pycountry
 
 def get_color_by_pollutant(pollutant):
     colors = {
@@ -42,8 +42,7 @@ def get_pollution_level(pollutant, value):
 
 def create_map(year=None, selected_pollutants=None):
     """Crée la carte Plotly avec fond bleu et points de pollution"""
-    data = gpd.read_file("data/cleaned/cleaneddata.geojson")
-    pd.utc=True  
+    data = gpd.read_file("data/cleaned/cleaneddata.geojson") 
 
     if year is not None:
         data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
@@ -283,42 +282,8 @@ app.layout = html.Div([
         ], className="buttons-polluants")
     ], style={'display': 'flex', 'justify-content':'center'}, className="below-map"),
     
-    html.Div([
-        html.Table([
-            html.Thead([
-                html.Tr([
-                    html.Th(""),
-                    html.Th("Pays"),
-                    html.Th("Unité"),
-                    html.Th("Valeur"),
-                    html.Th("Date"),
-                ])
-            ]),
-            html.Tbody([
-                html.Tr([
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                ]),
-                html.Tr([
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                ]),
-                html.Tr([
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                    html.Td("Pays 1"),
-                ]),
-            ])
-        ],)
-    ], className="ranking"),
+    html.Div(id="ranking-table", className="ranking"),
+    
     create_footer()
 ])
 
@@ -347,7 +312,8 @@ def play_pause(play_clicks, pause_clicks):
 @app.callback(
     [Output('carte', 'figure'),
      Output('nb-pays', 'children'),
-     Output('polluant', 'children')],
+     Output('polluant', 'children'),
+     Output('ranking-table', 'children')],
     [Input('year-slider', 'value'),
      Input('btn-pm25', 'n_clicks'),
      Input('btn-pm10', 'n_clicks'),
@@ -388,6 +354,10 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
     data_filtered = data[data['measurements_lastupdated'].dt.year == selected_year]
     
+    # Filtrer par polluants si sélectionnés
+    if pollutants_to_show:
+        data_filtered = data_filtered[data_filtered['measurements_parameter'].isin(pollutants_to_show)]
+    
     # Calculer le nombre de pays uniques
     nb_pays = data_filtered['country'].nunique()
     
@@ -397,9 +367,51 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     else:
         polluant_text = "Tous"
     
+    # Calculer le top 10 des pays les plus pollués
+    top_countries = data_filtered.groupby(['country', 'country_name_en']).agg({
+        'measurements_value': 'mean',
+        'measurements_unit': 'first',
+        'measurements_lastupdated': 'max'
+    }).reset_index()
+    
+    top_countries = top_countries.sort_values('measurements_value', ascending=False).head(5)
+    
+    # Créer le tableau HTML
+    table_rows = []
+    for idx, row in top_countries.iterrows():
+        rank = len(table_rows) + 1
+        country_name = row['country_name_en'] if pd.notna(row['country_name_en']) else row['country']
+        unit = row['measurements_unit'] if pd.notna(row['measurements_unit']) else 'µg/m³'
+        value = f"{row['measurements_value']:.2f}"
+        pd.utc=True 
+        date = pd.to_datetime(row['measurements_lastupdated']).strftime('%d/%m/%Y')
+        
+        table_rows.append(
+            html.Tr([
+                html.Td(f"#{rank}"),
+                html.Td(country_name),
+                html.Td(unit),
+                html.Td(value),
+                html.Td(date),
+            ])
+        )
+    
+    ranking_table = html.Table([
+        html.Thead([
+            html.Tr([
+                html.Th("Rang"),
+                html.Th("Pays"),
+                html.Th("Unité"),
+                html.Th("Valeur moyenne"),
+                html.Th("Dernière mesure"),
+            ])
+        ]),
+        html.Tbody(table_rows)
+    ])
+    
     fig = create_map(year=selected_year, selected_pollutants=pollutants_to_show)
     
-    return fig, str(nb_pays), polluant_text
+    return fig, str(nb_pays), polluant_text, ranking_table
 
 if __name__ == '__main__':
     app.run(debug=True)
