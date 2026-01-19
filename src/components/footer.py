@@ -1,4 +1,4 @@
-from dash import Dash, dcc, html
+from dash import html
 
 def create_footer():
     return html.Footer([

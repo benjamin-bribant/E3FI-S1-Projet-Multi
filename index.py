@@ -17,6 +17,21 @@ def get_color_by_pollutant(pollutant):
     }
     return colors.get(pollutant, '#6B7280')
 
+
+# Créer les styles pour chaque bouton
+def get_button_style(pollutant):
+    color = get_color_by_pollutant(pollutant)
+    is_selected = pollutant in selected_pollutants
+    
+    return {
+        'backgroundColor': color if is_selected else 'white',
+        'color': 'white' if is_selected else color,
+        'border': f'2px solid {color}',
+        'fontWeight': 'bold' if is_selected else 'normal',
+        'transition': 'all 0.3s ease'
+    }
+    
+    
 def get_pollution_level(pollutant, value):
     thresholds = {
         'PM2.5': [15, 35, 55],
@@ -185,104 +200,106 @@ selected_pollutants = set()
 app.layout = html.Div([
     html.H1("Dashboard - World Air Quality", style={'text-align':'center'}, className="page-title"),
     html.Div([
-        dcc.Slider(
-            min=2016, 
-            max=2025,
-            value=2016, 
-            step=1,
-            marks={i: str(i) for i in range(2016, 2026)},
-            id="year-slider",
-            className="custom-slider"
-        ),
+        html.Div([
+            dcc.Slider(
+                min=2016, 
+                max=2025,
+                value=2016, 
+                step=1,
+                marks={i: str(i) for i in range(2016, 2026)},
+                id="year-slider",
+                className="custom-slider"
+            ),
 
-        html.Div([
-            html.Button("Play", id="play-btn", n_clicks=0),
-            html.Button("Pause", id="pause-btn", n_clicks=0),
-        ]),
+            html.Div([
+                html.Button("Play", id="play-btn", n_clicks=0),
+                html.Button("Pause", id="pause-btn", n_clicks=0),
+            ]),
 
-        dcc.Interval(
-            id="interval",
-            interval=10000,
-            n_intervals=0,
-            max_intervals=-1  
-        ),
-    ], style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
-    
-    html.Div([
-        html.Div([
-            html.H6("Nombre de pays comptés", className='valeur-mesuree'),
-            html.H3(id="nb-pays")
-        ]),
-        html.Div([
-            html.H6("Polluant mesuré", className='valeur-mesuree'),
-            html.H3(id="polluant")
-        ]),
-    ], style={'display': 'flex', 'justify-content': 'space-evenly', 'margin':'3rem'}),
-    
-    html.Div([
-        dcc.Graph(
-            id="carte",
-            style={'height': '600px'}
-        )
-    ], style={'margin': '2rem'}),
-    
-    html.Div([
-        html.Div([
-            html.Span([
-                "PM2.5 : Particules fines (µg/m³)",
-                html.Span(
-                    "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
-                    className='tooltiptext'
-                )
-            ], className='tooltip'),
-            html.Br(),
-            html.Span([
-                "PM10 : Particules grossières (µg/m³)",
-                html.Span(
-                    "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
-                    className='tooltiptext'
-                )
-            ], className='tooltip'),
-            html.Br(),
-            html.Span([
-                "NO2 : Dioxyde d'azote (µg/m³)",
-                html.Span(
-                    "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
-                    className='tooltiptext'
-                )
-            ], className='tooltip'),
-            html.Br(),
-            html.Span([
-                "O3 : Ozone (µg/m³)",
-                html.Span(
-                    "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
-                    className='tooltiptext'
-                )
-            ], className='tooltip'),
-            html.Br(),
-            html.Span([
-                "CO2 : Émissions de dioxyde de carbone (tonnes)",
-                html.Span(
-                    "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
-                    className='tooltiptext'
-                )
-            ], className='tooltip'),
-        ], className='legende'),
+            dcc.Interval(
+                id="interval",
+                interval=10000,
+                n_intervals=0,
+                max_intervals=-1  
+            ),
+        ], style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
+        
         html.Div([
             html.Div([
-                html.Button('PM2.5', id='btn-pm25', n_clicks=0),
-                html.Button('PM10', id='btn-pm10', n_clicks=0),
-                html.Button('CO', id='btn-co', n_clicks=0),
+                html.H6("Nombre de pays comptés", className='valeur-mesuree'),
+                html.H3(id="nb-pays")
             ]),
             html.Div([
-                html.Button('NO2', id='btn-no2', n_clicks=0),
-                html.Button('SO2', id='btn-so2', n_clicks=0),
-                html.Button('O3', id='btn-o3', n_clicks=0),
+                html.H6("Polluant mesuré", className='valeur-mesuree'),
+                html.H3(id="polluant")
             ]),
-        ], className="buttons-polluants")
-    ], style={'display': 'flex', 'justify-content':'center'}, className="below-map"),
-    
-    html.Div(id="ranking-table", className="ranking"),
+        ], style={'display': 'flex', 'justify-content': 'space-evenly', 'margin':'3rem'}),
+        
+        html.Div([
+            dcc.Graph(
+                id="carte",
+                style={'height': '600px'}
+            )
+        ], style={'margin': '2rem'}),
+        
+        html.Div([
+            html.Div([
+                html.Span([
+                    "PM2.5 : Particules fines (µg/m³)",
+                    html.Span(
+                        "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                        className='tooltiptext'
+                    )
+                ], className='tooltip'),
+                html.Br(),
+                html.Span([
+                    "PM10 : Particules grossières (µg/m³)",
+                    html.Span(
+                        "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                        className='tooltiptext'
+                    )
+                ], className='tooltip'),
+                html.Br(),
+                html.Span([
+                    "NO2 : Dioxyde d'azote (µg/m³)",
+                    html.Span(
+                        "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                        className='tooltiptext'
+                    )
+                ], className='tooltip'),
+                html.Br(),
+                html.Span([
+                    "O3 : Ozone (µg/m³)",
+                    html.Span(
+                        "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                        className='tooltiptext'
+                    )
+                ], className='tooltip'),
+                html.Br(),
+                html.Span([
+                    "CO2 : Émissions de dioxyde de carbone (tonnes)",
+                    html.Span(
+                        "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                        className='tooltiptext'
+                    )
+                ], className='tooltip'),
+            ], className='legende'),
+            html.Div([
+                html.Div([
+                    html.Button('PM2.5', id='btn-pm25', n_clicks=0),
+                    html.Button('PM10', id='btn-pm10', n_clicks=0),
+                    html.Button('CO', id='btn-co', n_clicks=0),
+                ]),
+                html.Div([
+                    html.Button('NO2', id='btn-no2', n_clicks=0),
+                    html.Button('SO2', id='btn-so2', n_clicks=0),
+                    html.Button('O3', id='btn-o3', n_clicks=0),
+                ]),
+            ], className="buttons-polluants")
+        ], style={'display': 'flex', 'justify-content':'center'}, className="below-map"),
+        
+        html.Div(id="ranking-table", className="ranking"),
+    ], id="main-content"),
     
     create_footer()
 ])
@@ -313,13 +330,7 @@ def play_pause(play_clicks, pause_clicks):
     [Output('carte', 'figure'),
      Output('nb-pays', 'children'),
      Output('polluant', 'children'),
-     # Ajouter les outputs pour les styles
-     Output('btn-pm25', 'style'),
-     Output('btn-pm10', 'style'),
-     Output('btn-co', 'style'),
-     Output('btn-no2', 'style'),
-     Output('btn-so2', 'style'),
-     Output('btn-o3', 'style')],
+     Output('ranking-table', 'children')],
     [Input('year-slider', 'value'),
      Input('btn-pm25', 'n_clicks'),
      Input('btn-pm10', 'n_clicks'),
@@ -331,10 +342,7 @@ def play_pause(play_clicks, pause_clicks):
 def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, so2_clicks, o3_clicks):
     """Met à jour la carte en fonction de l'année et des polluants sélectionnés"""
     
-    # Initialiser la liste des polluants sélectionnés
-    if 'selected_pollutants' not in globals():
-        global selected_pollutants
-        selected_pollutants = set()
+    global selected_pollutants
     
     # Déterminer quel bouton a été cliqué
     if ctx.triggered:
@@ -363,6 +371,10 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
     data_filtered = data[data['measurements_lastupdated'].dt.year == selected_year]
     
+    # Filtrer par polluants si sélectionnés
+    if pollutants_to_show:
+        data_filtered = data_filtered[data_filtered['measurements_parameter'].isin(pollutants_to_show)]
+    
     # Calculer le nombre de pays uniques
     nb_pays = data_filtered['country'].nunique()
     
@@ -372,32 +384,51 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     else:
         polluant_text = "Tous"
     
+    # Calculer le top 10 des pays les plus pollués
+    top_countries = data_filtered.groupby(['country', 'country_name_en']).agg({
+        'measurements_value': 'mean',
+        'measurements_unit': 'first',
+        'measurements_lastupdated': 'max'
+    }).reset_index()
+    
+    top_countries = top_countries.sort_values('measurements_value', ascending=False).head(5)
+    
+    # Créer le tableau HTML
+    table_rows = []
+    for idx, row in top_countries.iterrows():
+        rank = len(table_rows) + 1
+        country_name = row['country_name_en'] if pd.notna(row['country_name_en']) else row['country']
+        unit = row['measurements_unit'] if pd.notna(row['measurements_unit']) else 'µg/m³'
+        value = f"{row['measurements_value']:.2f}"
+        pd.utc=True 
+        date = pd.to_datetime(row['measurements_lastupdated']).strftime('%d/%m/%Y')
+        
+        table_rows.append(
+            html.Tr([
+                html.Td(f"#{rank}"),
+                html.Td(country_name),
+                html.Td(unit),
+                html.Td(value),
+                html.Td(date),
+            ])
+        )
+    
+    ranking_table = html.Table([
+        html.Thead([
+            html.Tr([
+                html.Th("Rang"),
+                html.Th("Pays"),
+                html.Th("Unité"),
+                html.Th("Valeur moyenne"),
+                html.Th("Dernière mesure"),
+            ])
+        ]),
+        html.Tbody(table_rows)
+    ])
+    
     fig = create_map(year=selected_year, selected_pollutants=pollutants_to_show)
     
-    # Créer les styles pour chaque bouton
-    def get_button_style(pollutant):
-        color = get_color_by_pollutant(pollutant)
-        is_selected = pollutant in selected_pollutants
-        
-        return {
-            'backgroundColor': color if is_selected else 'white',
-            'color': 'white' if is_selected else color,
-            'border': f'2px solid {color}',
-            'fontWeight': 'bold' if is_selected else 'normal',
-            'transition': 'all 0.3s ease'
-        }
-    
-    # Générer les styles dans l'ordre des outputs
-    styles = [
-        get_button_style('PM2.5'),
-        get_button_style('PM10'),
-        get_button_style('CO'),
-        get_button_style('NO2'),
-        get_button_style('SO2'),
-        get_button_style('O3')
-    ]
-    
-    return fig, str(nb_pays), polluant_text, *styles
+    return fig, str(nb_pays), polluant_text, ranking_table
 
 if __name__ == '__main__':
     app.run(debug=True)
