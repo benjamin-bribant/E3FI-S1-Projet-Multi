@@ -1,5 +1,6 @@
 from dash import Dash, dcc, ctx, html, Input, Output
 from src.components.footer import create_footer
+from src.components.navbar import create_navbar
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
@@ -224,6 +225,8 @@ app.layout = html.Div([
             ),
         ], style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
         
+        create_navbar(),
+        
         html.Div([
             html.Div([
                 html.H6("Nombre de pays comptés", className='valeur-mesuree'),
@@ -330,7 +333,13 @@ def play_pause(play_clicks, pause_clicks):
     [Output('carte', 'figure'),
      Output('nb-pays', 'children'),
      Output('polluant', 'children'),
-     Output('ranking-table', 'children')],
+     Output('ranking-table', 'children'),
+     Output('btn-pm25', 'style'),
+     Output('btn-pm10', 'style'),
+     Output('btn-co', 'style'),
+     Output('btn-no2', 'style'),
+     Output('btn-so2', 'style'),
+     Output('btn-o3', 'style')],
     [Input('year-slider', 'value'),
      Input('btn-pm25', 'n_clicks'),
      Input('btn-pm10', 'n_clicks'),
@@ -378,13 +387,20 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     # Calculer le nombre de pays uniques
     nb_pays = data_filtered['country'].nunique()
     
-    # Déterminer les polluants affichés
+    # Créer l'affichage des polluants avec couleurs
     if pollutants_to_show:
-        polluant_text = ", ".join(sorted(pollutants_to_show))
+        polluant_display = []
+        for i, pollutant in enumerate(sorted(pollutants_to_show)):
+            color = get_color_by_pollutant(pollutant)
+            polluant_display.append(
+                html.Span(pollutant, style={'color': color, 'fontWeight': 'bold'})
+            )
+            if i < len(pollutants_to_show) - 1:
+                polluant_display.append(", ")
     else:
-        polluant_text = "Tous"
+        polluant_display = "Tous"
     
-    # Calculer le top 10 des pays les plus pollués
+    # Calculer le top 5 des pays les plus pollués
     top_countries = data_filtered.groupby(['country', 'country_name_en']).agg({
         'measurements_value': 'mean',
         'measurements_unit': 'first',
@@ -400,7 +416,6 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
         country_name = row['country_name_en'] if pd.notna(row['country_name_en']) else row['country']
         unit = row['measurements_unit'] if pd.notna(row['measurements_unit']) else 'µg/m³'
         value = f"{row['measurements_value']:.2f}"
-        pd.utc=True 
         date = pd.to_datetime(row['measurements_lastupdated']).strftime('%d/%m/%Y')
         
         table_rows.append(
@@ -428,7 +443,35 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     
     fig = create_map(year=selected_year, selected_pollutants=pollutants_to_show)
     
-    return fig, str(nb_pays), polluant_text, ranking_table
+    # Créer les styles pour chaque bouton
+    def get_button_style(pollutant):
+        color = get_color_by_pollutant(pollutant)
+        is_selected = pollutant in selected_pollutants
+        
+        return {
+            'backgroundColor': color if is_selected else 'white',
+            'color': 'white' if is_selected else color,
+            'border': f'2px solid {color}',
+            'fontWeight': 'bold' if is_selected else 'normal',
+            'transition': 'all 0.3s ease',
+            'width': '10rem',
+            'height': '3rem',
+            'borderRadius': '10px',
+            'margin': '0.5rem',
+            'cursor': 'pointer'
+        }
+    
+    # Générer les styles
+    styles = [
+        get_button_style('PM2.5'),
+        get_button_style('PM10'),
+        get_button_style('CO'),
+        get_button_style('NO2'),
+        get_button_style('SO2'),
+        get_button_style('O3')
+    ]
+    
+    return fig, str(nb_pays), polluant_display, ranking_table, *styles
 
 if __name__ == '__main__':
     app.run(debug=True)
