@@ -243,7 +243,7 @@ app.layout = html.Div([
                         html.Span([
                             "PM2.5 : Particules fines (µg/m³)",
                             html.Span(
-                                "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                                "Les particules en suspension PM2,5 sont des entités solides dont le diamètre est inférieur à 2.5 micromètre, nocives pour la santé respiratoire et cardiovasculaire",
                                 className='tooltiptext'
                             )
                         ], className='tooltip'),
@@ -251,7 +251,7 @@ app.layout = html.Div([
                         html.Span([
                             "PM10 : Particules grossières (µg/m³)",
                             html.Span(
-                                "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                                "Les particules en suspension PM10 sont des particules dont le diamètre est inférieur à 10 micromètres (poussières inhalables)",
                                 className='tooltiptext'
                             )
                         ], className='tooltip'),
@@ -259,7 +259,7 @@ app.layout = html.Div([
                         html.Span([
                             "NO2 : Dioxyde d'azote (µg/m³)",
                             html.Span(
-                                "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                                "Le dioxyde d'azote (NO2) est un polluant émis lors des phénomènes de combustion",
                                 className='tooltiptext'
                             )
                         ], className='tooltip'),
@@ -267,7 +267,7 @@ app.layout = html.Div([
                         html.Span([
                             "O3 : Ozone (µg/m³)",
                             html.Span(
-                                "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                                "L'ozone (O₃) est un gaz essentiel à la stratosphère (entre 15 et 30 km d'altitude), où il nous protège des effets nocifs des rayons UV",
                                 className='tooltiptext'
                             )
                         ], className='tooltip'),
@@ -275,7 +275,7 @@ app.layout = html.Div([
                         html.Span([
                             "CO2 : Émissions de dioxyde de carbone (tonnes)",
                             html.Span(
-                                "Les particules fines (PM2,5) sont des entités solides de très petite taille, nocives pour la santé respiratoire et cardiovasculaire",
+                                "Le dioxyde de carbone est un gaz incolore, inerte et non toxique. En grande quantité, il affaiblit la couche d'ozone provoquant le réchauffement de la planète",
                                 className='tooltiptext'
                             )
                         ], className='tooltip'),

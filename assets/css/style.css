@@ -51,11 +51,6 @@ body {
 }
 
 
-p {
-    font-weight: 200;
-    font-size: xx-small;
-}
-
 .tooltip {
     position: relative;
     display: inline-block;

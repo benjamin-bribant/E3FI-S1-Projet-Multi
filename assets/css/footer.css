@@ -10,3 +10,7 @@ footer {
 footer p, footer h3 {
     text-align: center;
 }
+
+footer p {
+    font-size: small;
+}

@@ -8,6 +8,6 @@ def create_footer():
             html.P("india.cabo@edu.esiee.fr"),
             html.Br(),
             html.P("Site réalisé par Benjamin BRIBANT et India CABO"),
-            html.P("Groupe 1l"),
+            html.P("E3FI - Groupe 1l"),
         ]),
     ])
