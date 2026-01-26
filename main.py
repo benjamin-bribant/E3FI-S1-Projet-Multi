@@ -313,7 +313,6 @@ app.layout = html.Div([
                          'color': '#005093', 'fontSize': '14px'}),
                 
                 html.Div([
-                    html.Span("💡 ", style={'fontSize': '20px'}),
                     html.Span([
                         "Méthodologie : ",
                         html.Strong("AQLI (Air Quality Life Index)"),
