@@ -1,6 +1,7 @@
 from dash import Dash, dcc, ctx, html, Input, Output, State
 from src.components.footer import create_footer
 from src.components.navbar import create_navbar
+from src.components.graphique import create_histo_esperance_vie
 import geopandas as gpd
 import pandas as pd
 import plotly.express as px
@@ -216,7 +217,7 @@ app.layout = html.Div([
                     n_intervals=0,
                     max_intervals=-1  
                 ),
-            ], style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
+            ], id="slider-controls", style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
             
             # Section CARTE
             html.Div([
@@ -300,9 +301,52 @@ app.layout = html.Div([
         
         # Section GRAPHIQUES
         html.Div([
+            html.H2("Analyse de l'Impact sur l'Espérance de Vie", 
+                    style={'textAlign': 'center', 'color': '#005093', 'marginTop': '2rem'}),
+            
             html.Div([
-                dcc.Graph(id='graph-placeholder', style={'height': '600px'})
-            ], style={'margin': '2rem'})
+                html.P([
+                    "Cet histogramme transforme une mesure chimique abstraite (PM2.5) en une donnée humaine tangible : ",
+                    html.Strong("le temps de vie perdu."),
+                    " Il permet de comparer l'impact de la pollution de l'air par rapport à d'autres facteurs de risque."
+                ], style={'textAlign': 'center', 'maxWidth': '800px', 'margin': '0 auto 2rem', 
+                         'color': '#005093', 'fontSize': '14px'}),
+                
+                html.Div([
+                    html.Span("💡 ", style={'fontSize': '20px'}),
+                    html.Span([
+                        "Méthodologie : ",
+                        html.Strong("AQLI (Air Quality Life Index)"),
+                        " - 10 µg/m³ supplémentaires de PM2.5 réduisent l'espérance de vie d'environ 1 an"
+                    ], style={'fontSize': '12px', 'color': '#666'})
+                ], style={'textAlign': 'center', 'marginBottom': '2rem'}),
+            ]),
+            
+            html.Div([
+                dcc.Graph(
+                    id='life-expectancy-chart',
+                    style={'height': '600px', 'width': '50wv', 'display': 'flex', 'justify-content':'center'}
+                )
+            ], style={'margin': '2rem'}),
+            
+            html.Div([
+            html.Div([
+                html.H4("Pour résumer ce graphique :", 
+                       style={'color': '#005093', 'marginBottom': '1rem'}),
+                html.Ul([
+                    html.Li("Les régions d'Asie du Sud et de l'Est sont parmi les plus touchées"),
+                    html.Li("Atteindre les normes OMS permettrait de gagner plusieurs années de vie"),
+                    html.Li("Les disparités régionales sont considérables")
+                ], style={'color': '#005093', 'lineHeight': '2'})
+            ], style={
+                'maxWidth': '800px',
+                'margin': '2rem auto',
+                'padding': '2rem',
+                'backgroundColor': '#f8f9fa',
+                'borderRadius': '10px',
+                'border': '2px solid #005093'
+            })
+        ])
         ], id='graphiques-section', style={'display': 'none'}),
         
     ], id="main-content"),
@@ -315,7 +359,8 @@ app.layout = html.Div([
 # Callback pour gérer l'affichage des sections
 @app.callback(
     [Output('carte-section', 'style'),
-     Output('graphiques-section', 'style')],
+     Output('graphiques-section', 'style'),
+     Output('slider-controls', 'style')],
     [Input('nav-carte', 'n_clicks'),
      Input('nav-graphiques', 'n_clicks')],
     prevent_initial_call=True
@@ -326,12 +371,26 @@ def toggle_sections(carte_clicks, graphiques_clicks):
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
         if button_id == 'nav-graphiques':
-            return {'display': 'none'}, {'display': 'block'}
+            # Afficher graphiques, cacher carte et slider
+            return (
+                {'display': 'none'}, 
+                {'display': 'block'},
+                {'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}
+            )
         else:  # nav-carte
-            return {'display': 'block'}, {'display': 'none'}
+            # Afficher carte, cacher graphiques, afficher slider
+            return (
+                {'display': 'block'}, 
+                {'display': 'none'},
+                {'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}
+            )
     
     # Par défaut, afficher la carte
-    return {'display': 'block'}, {'display': 'none'}
+    return (
+        {'display': 'block'}, 
+        {'display': 'none'},
+        {'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}
+    )
 
 
 
@@ -500,6 +559,15 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     ]
     
     return fig, str(nb_pays), polluant_display, ranking_table, *styles
+
+
+@app.callback(
+    Output('life-expectancy-chart', 'figure'),
+    [Input('year-slider', 'value')]
+)
+def update_histo_esperance_vide(selected_year):
+    """Met à jour le graphique d'espérance de vie selon l'année"""
+    return create_histo_esperance_vie(year=selected_year)
 
 if __name__ == '__main__':
     app.run(debug=True)
