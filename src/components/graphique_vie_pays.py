@@ -1,17 +1,19 @@
+"""
+Composant : Graphique en barres de l'espérance de vie par région
+"""
 from dash import html, dcc
 import plotly.graph_objects as go
 import geopandas as gpd
 import pandas as pd
 from src.utils.mapping_region import get_region, calculate_years_lost
 
-def create_histo_esperance_vie(year=None):
+
+def create_life_expectancy_graph(year=None):
     """
-    Crée l'histogramme du dividende d'espérance de vie par région
+    Crée le graphique en barres du dividende d'espérance de vie par région
     
-    :param year entier: Année à filtrer (None pour toutes les années)
-        
-    Returns:
-        plotly.graph_objects.Figure: Graphique Plotly
+    :param year int: Année à filtrer (None pour toutes les années)
+    :returns plotly.graph_objects.Figure: Graphique Plotly
     """
     # Charger les données
     data = gpd.read_file("data/cleaned/cleaneddata.geojson")
@@ -95,11 +97,11 @@ def create_histo_esperance_vie(year=None):
     return fig
 
 
-def create_graphs_section():
+def create_life_expectancy_section():
     """
-    Crée la section complète des graphiques
+    Crée la section HTML complète pour le graphique d'espérance de vie
     
-    :returns html.Div: Composant Dash contenant les graphiques
+    :returns html.Div: Section HTML avec titre, description et graphique
     """
     return html.Div([
         html.H2("Analyse de l'Impact sur l'Espérance de Vie", 
@@ -107,7 +109,7 @@ def create_graphs_section():
         
         html.Div([
             html.P([
-                "Cet histogramme transforme une mesure chimique abstraite (PM2.5) en une donnée humaine tangible : ",
+                "Ce graphique transforme une mesure chimique abstraite (PM2.5) en une donnée humaine tangible : ",
                 html.Strong("le temps de vie perdu."),
                 " Il permet de comparer l'impact de la pollution de l'air par rapport à d'autres facteurs de risque."
             ], style={'textAlign': 'center', 'maxWidth': '800px', 'margin': '0 auto 2rem', 
@@ -147,4 +149,4 @@ def create_graphs_section():
                 'border': '2px solid #005093'
             })
         ])
-    ], id='graphs-section', style={'display': 'none'})
+    ], style={'margin': '2rem'})
