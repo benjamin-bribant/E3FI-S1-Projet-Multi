@@ -9,6 +9,72 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import pycountry
+from functools import lru_cache
+from flask_caching import Cache
+
+app = Dash(__name__)
+
+# Configuration du cache
+cache = Cache(app.server, config={
+    'CACHE_TYPE': 'SimpleCache',
+    'CACHE_DEFAULT_TIMEOUT': 300  # 5 minutes
+})
+
+
+@cache.memoize(timeout=3600) 
+def load_geojson_data():
+    """Charge et cache les données GeoJSON"""
+    print("Chargement des données depuis le fichier...")
+    data = gpd.read_file("data/cleaned/cleaneddata.geojson")
+    data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
+    data['year'] = data['measurements_lastupdated'].dt.year
+    data['lat'] = data.geometry.y
+    data['lon'] = data.geometry.x
+    return data
+
+@lru_cache(maxsize=128)
+def iso2_to_iso3(iso2_code):
+    """Cache la conversion ISO-2 vers ISO-3"""
+    try:
+        return pycountry.countries.get(alpha_2=iso2_code).alpha_3
+    except:
+        return None
+
+@cache.memoize(timeout=3600)
+def get_all_countries_df():
+    """Cache la liste de tous les pays du monde"""
+    all_countries = []
+    for country in pycountry.countries:
+        all_countries.append({
+            'country_iso3': country.alpha_3,
+            'country_name': country.name
+        })
+    return pd.DataFrame(all_countries)
+
+@cache.memoize(timeout=600)
+def get_filtered_data(year, pollutants_tuple):
+    """Cache les données filtrées par année et polluants"""
+    data = load_geojson_data()
+    data_filtered = data[data['year'] == year].copy()
+    
+    if pollutants_tuple:
+        pollutants_list = list(pollutants_tuple)
+        data_filtered = data_filtered[data_filtered['measurements_parameter'].isin(pollutants_list)]
+    
+    return data_filtered
+
+@cache.memoize(timeout=600)
+def calculate_country_pollution(year, pollutants_tuple):
+    """Cache les calculs de pollution par pays"""
+    data = get_filtered_data(year, pollutants_tuple)
+    
+    pollution_by_country = data.groupby('country')['measurements_value'].mean().reset_index()
+    pollution_by_country.columns = ['country', 'avg_pollution']
+    pollution_by_country['country_iso3'] = pollution_by_country['country'].apply(iso2_to_iso3)
+    pollution_by_country = pollution_by_country.dropna(subset=['country_iso3'])
+    
+    return pollution_by_country
+
 
 def get_color_by_pollutant(pollutant):
     colors = {
@@ -45,41 +111,15 @@ def get_pollution_level(pollutant, value):
     else:
         return "Très mauvais"
 
-def create_map(year=None, selected_pollutants=None):
-    """Crée la carte Plotly avec fond bleu et points de pollution"""
-    data = gpd.read_file("data/cleaned/cleaneddata.geojson") 
 
-    if year is not None:
-        data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
-        data = data[data['measurements_lastupdated'].dt.year == year]
+@cache.memoize(timeout=600)
+def create_map(year, pollutants_tuple):
+    """Crée la carte Plotly avec fond bleu et points de pollution (avec cache)"""
     
-    # Filtrer par polluants sélectionnés
-    if selected_pollutants and len(selected_pollutants) > 0:
-        data = data[data['measurements_parameter'].isin(selected_pollutants)]
-    
-    # Fonction pour convertir ISO-2 en ISO-3
-    def iso2_to_iso3(iso2_code):
-        try:
-            return pycountry.countries.get(alpha_2=iso2_code).alpha_3
-        except:
-            return None
-    
-    # Calculer la pollution moyenne par pays
-    pollution_by_country = data.groupby('country')['measurements_value'].mean().reset_index()
-    pollution_by_country.columns = ['country', 'avg_pollution']
-    
-    # Convertir les codes ISO-2 en ISO-3
-    pollution_by_country['country_iso3'] = pollution_by_country['country'].apply(iso2_to_iso3)
-    pollution_by_country = pollution_by_country.dropna(subset=['country_iso3'])
-    
-    # Créer un DataFrame avec TOUS les pays du monde
-    all_countries = []
-    for country in pycountry.countries:
-        all_countries.append({
-            'country_iso3': country.alpha_3,
-            'country_name': country.name
-        })
-    all_countries_df = pd.DataFrame(all_countries)
+    # Récupérer les données depuis le cache
+    data = get_filtered_data(year, pollutants_tuple)
+    pollution_by_country = calculate_country_pollution(year, pollutants_tuple)
+    all_countries_df = get_all_countries_df()
     
     # Fusionner avec les données de pollution (left join pour garder tous les pays)
     world_pollution = all_countries_df.merge(
@@ -127,9 +167,7 @@ def create_map(year=None, selected_pollutants=None):
         showlegend=False
     ))
     
-    # Préparer les données des points par polluant
-    data['lat'] = data.geometry.y
-    data['lon'] = data.geometry.x
+    # Préparer les données des points (optimisé avec vectorisation)
     data['level'] = data.apply(lambda row: get_pollution_level(row['measurements_parameter'], row['measurements_value']), axis=1)
     data['hover_text'] = data.apply(lambda row: 
         f"<b>{row.get('location', 'Localisation inconnue')}</b><br>" +
@@ -161,6 +199,7 @@ def create_map(year=None, selected_pollutants=None):
     
     # Mise en page
     fig.update_geos(
+        projection_type="natural earth",
         visible=False,
         showcountries=True,
         showcoastlines=True,
@@ -182,7 +221,6 @@ def create_map(year=None, selected_pollutants=None):
     return fig
 
 
-app = Dash()
 
 # Variable globale pour stocker les polluants sélectionnés
 selected_pollutants = set()
@@ -450,30 +488,24 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
             else:
                 selected_pollutants.add(pollutant)
     
-    # Si aucun polluant sélectionné, afficher tous
-    pollutants_to_show = list(selected_pollutants) if len(selected_pollutants) > 0 else None
+    # Convertir en tuple pour le cache (les sets ne sont pas hashables)
+    pollutants_tuple = tuple(sorted(selected_pollutants)) if len(selected_pollutants) > 0 else None
     
-    # Charger les données pour calculer les statistiques
-    data = gpd.read_file("data/cleaned/cleaneddata.geojson")
-    data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
-    data_filtered = data[data['measurements_lastupdated'].dt.year == selected_year]
-    
-    # Filtrer par polluants si sélectionnés
-    if pollutants_to_show:
-        data_filtered = data_filtered[data_filtered['measurements_parameter'].isin(pollutants_to_show)]
+    # Récupérer les données filtrées (depuis le cache)
+    data_filtered = get_filtered_data(selected_year, pollutants_tuple)
     
     # Calculer le nombre de pays uniques
     nb_pays = data_filtered['country'].nunique()
     
     # Créer l'affichage des polluants avec couleurs
-    if pollutants_to_show:
+    if pollutants_tuple:
         polluant_display = []
-        for i, pollutant in enumerate(sorted(pollutants_to_show)):
+        for i, pollutant in enumerate(sorted(pollutants_tuple)):
             color = get_color_by_pollutant(pollutant)
             polluant_display.append(
                 html.Span(pollutant, style={'color': color, 'fontWeight': 'bold'})
             )
-            if i < len(pollutants_to_show) - 1:
+            if i < len(pollutants_tuple) - 1:
                 polluant_display.append(", ")
     else:
         polluant_display = "Tous"
@@ -519,7 +551,8 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
         html.Tbody(table_rows)
     ])
     
-    fig = create_map(year=selected_year, selected_pollutants=pollutants_to_show)
+    # Créer la carte (depuis le cache si disponible)
+    fig = create_map(selected_year, pollutants_tuple)
     
     # Créer les styles pour chaque bouton
     def get_button_style(pollutant):
