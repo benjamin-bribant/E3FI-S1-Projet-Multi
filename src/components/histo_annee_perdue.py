@@ -109,7 +109,8 @@ def create_years_lost_histogram_section():
         html.Div([
             html.P([
                 "Cet histogramme montre combien d'années de vie sont perdues pour chaque intervalle de concentration de PM2.5. ",
-                "Plus la concentration est élevée, plus l'impact sur l'espérance de vie est important."
+                "Plus la concentration est élevée, plus l'impact sur l'espérance de vie est important. ",
+                "Les données sont basées sur la méthodologie AQLI (Air Quality Life Index)."
             ], style={'textAlign': 'center', 'maxWidth': '800px', 'margin': '0 auto 1rem', 
                      'color': '#005093', 'fontSize': '14px'}),
             html.Div([
@@ -119,5 +120,73 @@ def create_years_lost_histogram_section():
                 ], style={'fontSize': '12px', 'color': '#666'})
             ], style={'textAlign': 'center', 'marginBottom': '2rem'}),
         ]),
-        dcc.Graph(id='histogram-years-lost', style={'height': '600px'})
+        dcc.Graph(id='histogram-years-lost', style={'height': '600px'}),
+        
+        html.Div([
+            html.Div([
+                html.H4("Comment lire cet histogramme :", 
+                       style={'color': '#005093', 'marginBottom': '1rem'}),
+                html.Ul([
+                    html.Li([
+                        html.Strong("Axe horizontal (X) : "),
+                        "Tranches de concentration de PM2.5 (µg/m³). Par exemple, 0-5, 5-15, 15-25, etc."
+                    ]),
+                    html.Li([
+                        html.Strong("Axe vertical (Y) : "),
+                        "Nombre moyen d'années d'espérance de vie perdues pour les personnes vivant dans cette tranche de pollution."
+                    ]),
+                    html.Li([
+                        html.Strong("Couleur des barres : "),
+                        "Dégradé du vert (impact faible) au rouge foncé (impact grave). Plus c'est rouge, plus c'est dangereux."
+                    ]),
+                    html.Li([
+                        html.Strong("Ligne verte pointillée : "),
+                        "Représente la norme OMS (5 µg/m³). En dessous de ce seuil, l'impact est considéré comme négligeable."
+                    ])
+                ], style={'color': '#005093', 'lineHeight': '2'}),
+                
+                html.Hr(style={'margin': '1.5rem 0', 'border': '1px solid #005093'}),
+                
+                html.H4("Ce qu'on peut en déduire :", 
+                       style={'color': '#005093', 'marginTop': '1.5rem', 'marginBottom': '1rem'}),
+                html.Ul([
+                    html.Li([
+                        html.Strong("Relation directe : "),
+                        "Plus la concentration de PM2.5 est élevée, plus on perd d'années de vie. La relation est quasi-linéaire."
+                    ]),
+                    html.Li([
+                        html.Strong("Impact cumulatif : "),
+                        "Vivre toute sa vie dans une zone à 50 µg/m³ peut réduire l'espérance de vie de 4-5 ans par rapport à la norme OMS."
+                    ]),
+                    html.Li([
+                        html.Strong("Zones critiques : "),
+                        "Les barres rouges (>100 µg/m³) montrent des situations d'urgence sanitaire où les populations perdent plus de 8 ans d'espérance de vie."
+                    ]),
+                    html.Li([
+                        html.Strong("Effet seuil : "),
+                        "En dessous de 5 µg/m³ (norme OMS), l'impact sur la santé devient très faible, d'où l'importance de respecter cette norme."
+                    ])
+                ], style={'color': '#005093', 'lineHeight': '2'}),
+                
+                html.Hr(style={'margin': '1.5rem 0', 'border': '1px solid #005093'}),
+                
+                html.H4("Mise en perspective :", 
+                       style={'color': '#005093', 'marginTop': '1.5rem', 'marginBottom': '1rem'}),
+                html.P([
+                    "Pour donner un ordre d'idée, la pollution aux PM2.5 réduit l'espérance de vie mondiale de ",
+                    html.Strong("2,3 ans en moyenne", style={'color': '#DC2626'}),
+                    ". C'est plus que l'alcool (1,6 an), les accidents de la route (0,7 an) ou le terrorisme (0,01 an). ",
+                    "Dans certaines régions comme le nord de l'Inde ou l'est de la Chine, la perte peut dépasser ",
+                    html.Strong("6 ans", style={'color': '#7F1D1D'}),
+                    "."
+                ], style={'color': '#005093', 'fontSize': '14px', 'lineHeight': '1.8', 'fontStyle': 'italic'})
+            ], style={
+                'maxWidth': '900px',
+                'margin': '2rem auto',
+                'padding': '2rem',
+                'backgroundColor': '#f8f9fa',
+                'borderRadius': '10px',
+                'border': '2px solid #005093'
+            })
+        ])
     ], style={'margin': '2rem'})
