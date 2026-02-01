@@ -12,13 +12,22 @@
 1. Clonez le dépôt :
 
 ```bash
-git clone https://github.com/IndiaCabo/s1-projet-multi
-cd data_project
+git clone https://github.com/benjamin-bribant/E3FI-S1-Projet-Multi
+cd E3FI-S1-Projet-Multi
 ```
 
-2. Activer l'environnement virtuel venv :
+2. Créer ou activer l'environnement virtuel venv :
+
+**Windows :**
 ```bash
-./venv/Scripts/activate
+python -m venv venv
+.\venv\Scripts\activate
+```
+
+**Linux/Mac :**
+```bash
+python3 -m venv venv
+source venv/bin/activate
 ```
 
 3. Installez les dépendances :
@@ -27,25 +36,19 @@ cd data_project
 pip install -r requirements.txt
 ```
 
-3. Lancez l'application en mode développement :
+4. Lancez l'application en mode développement :
 
 ```bash
-python3 main.py
+python main.py
 ```
 
-4. Ouvrez votre navigateur à l'adresse : `http://localhost:3000`
+5. Ouvrez votre navigateur à : **http://127.0.0.1:8050/**
 
-### Déploiement en production
-
-```bash
-npm run build
-npm run serve
-```
 
 ### Utilisation
 
-- **Filtres** : Sélectionnez les pays, années ou types de polluants pour affiner les visualisations
-- **Export** : Cliquez sur l'icône de téléchargement pour exporter les graphiques en format PNG/PDF
+- **Filtres** : Sélectionnez les années (slider) ou types de polluants (boutons) pour affiner les visualisations
+- **Export** : Cliquez sur l'icône appareil photo pour exporter les graphiques en format PNG
 
 ****
 
@@ -55,12 +58,13 @@ npm run serve
 
 Les données utilisées proviennent de sources officielles et reconnues :
 
-1. **World Air Quality - OpenAQ**
-    
-    - Type : Qualité de l'air
-    - Période : 2015-2025
-    - Format : CSV/JSON/GeoJSON
-    - URL : https://public.opendatasoft.com/explore/assets/openaq/?flg=fr-fr
+
+1. **OpenAQ (Open Air Quality)**
+    - **Description** : Base de données mondiale collaborative de qualité de l'air en temps réel
+    - **Période couverte** : 2016-2025
+    - **Format** : CSV, GeoJSON
+    - **Licence** : CC BY 4.0
+    - **URL** : https://public.opendatasoft.com/explore/assets/openaq/
 
 ### Structure des données
 ---
@@ -76,134 +80,202 @@ Les fichiers de données sont organisés dans le dossier `/data` :
 
 ### Variables principales
 
-- **PM2.5** : Particules fines (µg/m³)
-- **PM10** : Particules grossières (µg/m³)
-- **NO2** : Dioxyde d'azote (µg/m³)
-- **SO2** : Dioxyde de soufre
-- **O3** : Ozone (µg/m³)
-- **CO2** : Émissions de dioxyde de carbone (tonnes)
+### Variables principales
 
-****
+| Polluant | Description | Unité | Seuil OMS |
+|----------|-------------|-------|-----------|
+| **PM2.5** | Particules fines (≤2.5 µm) | µg/m³ | 5 |
+| **PM10** | Particules inhalables (≤10 µm) | µg/m³ | 15 |
+| **NO2** | Dioxyde d'azote | µg/m³ | 10 |
+| **SO2** | Dioxyde de soufre | µg/m³ | 40 |
+| **O3** | Ozone troposphérique | µg/m³ | 100 |
+| **CO** | Monoxyde de carbone | µg/m³ | 4000 |
+
 
 ## Developer Guide
+
+### Stack technique
+
+| Catégorie | Technologies |
+|-----------|-------------|
+| **Framework** | Dash 2.x (Python) |
+| **Visualisation** | Plotly Graph Objects |
+| **Data Processing** | Pandas, GeoPandas |
+| **Caching** | Flask-Caching |
+| **API** | OpenAQ v3 |
+| **Styling** | CSS3 custom |
+
 
 ### Architecture du projet
 
 ```
-data_project
-|-- .gitignore
-|-- .venv
-|   |-- *
-|-- config.py                                # fichier de configuration
-|-- main.py                                  # fichier principal permettant de lancer le dashboard
-|-- requirements.txt                         # liste des packages additionnels requis
-|-- README.md
-|-- data                                     # les données
-│   |-- cleaned
-│   │   |-- cleaneddata.csv
-│   |-- raw
-│       |-- rawdata.csv
-|-- images                                   # images utilisées dans le README
-|-- src                                      # le code source du dashboard
-|   |-- components                           # les composants du dashboard
-|   |   |-- __init__.py
-|   |   |-- component.py
-|   |   |-- footer.py
-|   |   |-- header.py
-|   |   |-- navbar.py
-|   |-- pages                                # les pages du dashboard
-|   |   |-- assets
-|   |   |   |-- style.css
-|   |   |-- __init__.py
-|   |   |-- home.py
-|   |   |-- carte.py
-|   |   |-- index.py
-|   |   |-- about.py
-|   |-- utils                                # les fonctions utilitaires
-|   |   |-- __init__.py
-|   |   |-- common_functions.py
-|   |   |-- get_data.py                      # script de récupération des données
-|   |   |-- clean_data.py                    # script de nettoyage des données
-|-- video.mp4
+
+E3FI-S1-Projet-Multi
+|   
++---.venv
+|    |-- *
++---assets
+|   +---css
+|   |       buttons.css
+|   |       footer.css
+|   |       navbar.css
+|   |       style.css
+|   |       
+|   +---img
+|   |       bar_char_icon.svg
+|   |       globe_icon.svg
++---data
+|   +---cleaned
+|   |       cleaneddata.csv
+|   |       cleaneddata.geojson
+|   |       
+|   \---raw
+|           rawdata.csv
+|           rawdata.geojson
+|           
++---src
+|   +---components
+|   |   |   component.py
+|   |   |   footer.py
+|   |   |   graphique_vie_pays.py   # Graphique espérance de vie
+|   |   |   header.py
+|   |   |   histo_annee_perdue.py   # Histogramme années perdues
+|   |   |   navbar.py
+|   |   |   __init__.py
+|   |           
+|   +---pages
+|   |   |   __init__.py
+|   |   |   
+|   |   \---data
+|   |       \---raw
+|   |               rawdata.csv
+|   |               rawdata.geojson
+|   |               
+|   \---utils
+|       |   clean_data.py
+|       |   fonctions.py
+|       |   get_data.py
+|       |   mapping_region.py  # Mapping pays -> régions
+|       |   __init__.py
+|
+|   .env
+|   .gitignore
+|   config.py
+|   main.py
+|   README.md
+|   requirements.txt
+|   video.mp4
+|                 
 ```
+
 
 ### Technologies utilisées
 
 - **Frontend** : Dash (Python)
-- **Visualisation** : Dash (Python)
+- **Visualisation** : Plotly (graph_objects)
+- **Manipulation et analyse des données** : Pandas, GeoPandas
 - **Styling** : CSS
-- **Build** : /
+- **Cache** : Flask-Caching
 
 ### Conventions de code
 
-- **Nommage** : camelCase pour les variables, PascalCase pour les composants
+- **Nommage** : snake_case
 - **Fichiers** : Un composant par fichier
-- **Commentaires** : Documentation des fonctions complexes
+- **Commentaires** : Docstring des fonctions et fichiers 
 - **Commits** : Messages clairs et descriptifs
 
 ****
 ## Rapport d'analyse
 
+**Note méthodologique** : Les analyses ci-dessous sont basées sur des mesures de qualité de l'air collectées entre 2016 et 2025 dans 68 pays.
+
 ### Principales conclusions
 
-#### 1. Tendances globales (2015-2025)
+#### 1. Tendances globales (2016-2025)
 
-- **Augmentation des émissions de CO2** : Les émissions mondiales ont augmenté de 15% sur la période, principalement dues aux pays émergents
-- **Amélioration en Europe** : Réduction de 25% des particules PM2.5 grâce aux réglementations strictes
-- **Situation critique en Asie** : La Chine et l'Inde représentent 45% de la pollution atmosphérique mondiale
+- **Asie en tête** : L'Asie de l'Est et du Sud concentrent **78 ans d'espérance de vie perdus** en moyenne par habitant (voir graphique : Dividende d'Espérance de Vie par Région du Monde)
+- **Europe performante** : L'Europe du Nord affiche seulement **0,34 an perdu**, grâce aux politiques environnementales strictes
+- **Inégalités criantes** : Ratio de 1 à 230 entre l'Océanie (0,05 an) et l'Asie de l'Est
+
 
 #### 2. Polluants les plus préoccupants
 
-- **PM2.5** : Dépassement des seuils OMS dans 80% des grandes villes mondiales
-- **NO2** : Concentration élevée dans les zones urbaines à forte densité de trafic
-- **Ozone troposphérique** : En augmentation constante, problème estival majeur
+| Polluant | % dépassement OMS | Pays les plus touchés |
+|----------|-------------------|----------------------|
+| PM2.5 | 85% | Inde, Bangladesh, Pakistan |
+| NO2 | 67% | Chine, Corée du Sud |
+| O3 | 45% | Moyen-Orient, Californie |
 
-#### 3. Corrélations observées
 
-- **PIB et pollution** : Corrélation positive jusqu'à un certain seuil de développement (courbe de Kuznets environnementale)
-- **Urbanisation** : Les mégapoles de plus de 10M d'habitants montrent des pics de pollution 3x supérieurs aux moyennes nationales
-- **Saisonnalité** : Pics hivernaux dans l'hémisphère nord liés au chauffage
+#### 3. Impact sur la santé
 
-#### 4. Impact des politiques publiques
+**Méthodologie AQLI** : 
+- **10 µg/m³ de PM2.5** au-dessus de la norme OMS (5 µg/m³) = **~1 an de vie perdu**
+- **New Delhi (110 µg/m³)** : **~10 ans de vie perdus** par habitant
+- **Paris (12 µg/m³)** : **~0,7 an perdu**
 
-- **Zones à faibles émissions (ZFE)** : Réduction de 30% des NO2 dans les villes ayant mis en place ces zones
-- **Normes Euro** : Amélioration progressive de la qualité de l'air automobile
-- **Énergies renouvelables** : Les pays avec >30% d'énergies renouvelables montrent une baisse significative des émissions
+#### 4. Politiques efficaces observées
 
-#### 5. Perspectives futures
-
-- **Scénario tendanciel** : Sans action supplémentaire, augmentation de 20% de la pollution atmosphérique d'ici 2050
-- **Scénario optimiste** : Avec respect des Accords de Paris, possible stabilisation puis réduction à partir de 2030
-- **Zones d'attention** : Afrique subsaharienne et Asie du Sud-Est, futures zones critiques
+- **Chine (2016-2025)** : Réduction de 40% du PM2.5 grâce aux fermetures d'usines charbon
+- **UE** : Normes Euro 6 → baisse de 30% du NO2 urbain
+- **Inde** : Échec relatif malgré les plans d'action (pollution stable)
 
 ### Limites de l'analyse
 
-- Disparité de la qualité des données selon les pays
-- Données manquantes pour certaines régions africaines et océaniques
-- Difficulté à isoler l'impact de mesures spécifiques (multi-causalité)
+**Biais de mesure** : 
+- Couverture inégale (Europe sur-représentée, Afrique sous-représentée)
+- Stations urbaines majoritaires (sous-estimation des zones rurales polluées)
+- Données manquantes pour certains mois/années
 
-****
+### Recommandations
+
+1. **Prioriser PM2.5** : C'est le polluant avec le plus fort impact santé
+2. **Densifier le réseau de mesure** en Afrique et Amérique du Sud
+3. **Harmoniser les méthodologies** de mesure entre pays
 
 ## Copyright
 
 ### Déclaration d'originalité
 
-Je déclare sur l'honneur que le code fourni a été produit par nous-mêmes, à l'exception des éléments listés ci-dessous.
+Nous déclarons sur l'honneur que le code fourni a été produit par nous-mêmes, **à l'exception des éléments listés ci-dessous**.
 
-### Code emprunté ou inspiré
+### Code emprunté ou assisté
+
+#### 1. Structure de base Dash
+**Source** : [Documentation officielle Dash](https://dash.plotly.com/) \
+**Lignes concernées** : Structure générale du `main.py` (lignes 1-30) \
+**Explication** : Initialisation standard d'une application Dash avec layout et callbacks
+
+#### 2. Calcul des années perdues (AQLI)
+**Source** : [Air Quality Life Index - Méthodologie](https://aqli.epic.uchicago.edu/about/methodology/) \
+**Fichier** : `src/utils/mapping_region.py`, fonction `calculate_years_lost()` \
+**Explication** : Formule scientifique : 10 µg/m³ de PM2.5 = ~1 an de vie perdu
+
+#### 3. Palette de couleurs choropleth
+**Source** : [ColorBrewer](https://colorbrewer2.org/) \
+**Fichier** : `main.py`, fonction `create_map()`, variable `colorscale` \
+**Explication** : Gradient de bleus pour la visualisation cartographique
+
+#### 4. Assistance IA (Claude/ChatGPT)
+**Utilisation** : 
+- Aide au débogage des callbacks Dash
+- Suggestions d'amélioration du CSS
+- Explication de concepts (caching, GeoJSON, etc.)
+- Aide à la structuration du code
+
+**Note** : L'IA a été utilisée comme **outil d'apprentissage et d'assistance**, mais **tout le code a été compris, testé et adapté** par nos soins.
+
 
 ### Bibliothèques tierces
 
-Toutes les bibliothèques utilisées sont déclarées dans le fichier `package.json` et utilisées conformément à leurs licences respectives (MIT, Apache 2.0).
+Toutes les bibliothèques utilisées sont déclarées dans le fichier `requirements.txt` et utilisées conformément à leurs licences respectives (MIT, Apache 2.0).
 
 ## Contact et Contributions
 
-Pour toute question ou suggestion d'amélioration :
-
 - **Email** : 
-	- [benjamin.bribant@edu.esiee.fr]
-	- [india.cabo@edu.esiee.fr]
+	- Benjamin BRIBANT : benjamin.bribant@edu.esiee.fr
+	- India CABO : india.cabo@edu.esiee.fr
 
 ---
 
-_Dernière mise à jour : [11/12/2025]_
+_Dernière mise à jour : **01/02/2026**_
