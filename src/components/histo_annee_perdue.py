@@ -1,0 +1,185 @@
+"""
+Composant : Histogramme des années perdues selon les intervalles de PM2.5
+"""
+from dash import html, dcc
+import plotly.graph_objects as go
+import geopandas as gpd
+import pandas as pd
+from src.utils.mapping_region import calculate_years_lost
+
+
+def create_years_lost_histogram(year):
+    """
+    Crée un histogramme montrant les années perdues selon les intervalles de PM2.5
+    
+    :param year int: Année à filtrer
+    :returns plotly.graph_objects.Figure: Graphique Plotly
+    """
+    data = gpd.read_file("data/cleaned/cleaneddata.geojson")
+    data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
+    
+    data_filtered = data[
+        (data['measurements_lastupdated'].dt.year == year) &
+        (data['measurements_parameter'] == 'PM2.5')
+    ]
+    
+    data_filtered['years_lost'] = data_filtered['measurements_value'].apply(calculate_years_lost)
+    
+    bins = [0, 5, 15, 25, 35, 50, 75, 100, 150, 200, 500]
+    labels = ['0-5', '5-15', '15-25', '25-35', '35-50', '50-75', '75-100', '100-150', '150-200', '200+']
+    data_filtered['pm25_range'] = pd.cut(data_filtered['measurements_value'], bins=bins, labels=labels, include_lowest=True)
+    
+    range_stats = data_filtered.groupby('pm25_range', observed=True).agg({
+        'years_lost': 'mean',
+        'measurements_value': 'count'
+    }).reset_index()
+    
+    range_stats.columns = ['pm25_range', 'avg_years_lost', 'count']
+    
+    fig = go.Figure()
+    
+    colors_gradient = ['#10B981', '#06B6D4', '#3B82F6', '#005093', '#F97316', '#EF4444', '#DC2626', '#991B1B', '#7F1D1D', '#450A0A']
+    
+    fig.add_trace(go.Bar(
+        x=range_stats['pm25_range'].astype(str),
+        y=range_stats['avg_years_lost'],
+        marker=dict(
+            color=colors_gradient[:len(range_stats)],
+            line=dict(color='#003d73', width=1)
+        ),
+        text=range_stats['avg_years_lost'].apply(lambda x: f'{x:.2f} ans'),
+        textposition='outside',
+        hovertemplate='<b>PM2.5: %{x} µg/m³</b><br>' +
+                      'Années perdues en moyenne: %{y:.2f} ans<br>' +
+                      'Nombre de mesures: %{customdata}<br>' +
+                      '<extra></extra>',
+        customdata=range_stats['count']
+    ))
+    
+    fig.update_layout(
+        title=f"Impact sur l'espérance de vie selon les niveaux de PM2.5 ({year})",
+        xaxis_title="Concentration de PM2.5 (µg/m³)",
+        yaxis_title="Années d'espérance de vie perdues (moyenne)",
+        height=600,
+        showlegend=False,
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        font=dict(family='Montserrat', color='#005093'),
+        xaxis=dict(
+            showgrid=False,
+        ),
+        yaxis=dict(
+            gridcolor='#E5E5E5',
+            showgrid=True,
+            zeroline=True,
+            zerolinecolor='#005093',
+            zerolinewidth=2
+        ),
+        margin=dict(l=80, r=50, t=80, b=100)
+    )
+    
+    fig.add_hline(
+        y=0,
+        line_dash="dash",
+        line_color="#10B981",
+        annotation_text="Norme OMS (5 µg/m³)",
+        annotation_position="right"
+    )
+    
+    return fig
+
+
+def create_years_lost_histogram_section():
+    """
+    Crée la section HTML complète pour l'histogramme des années perdues
+    
+    :returns html.Div: Section HTML avec titre, description et graphique
+    """
+    return html.Div([
+        html.H2("Années d'espérance de vie perdues selon les niveaux de PM2.5", 
+                style={'text-align': 'center', 'margin': '2rem'}),
+        html.Div([
+            html.P([
+                "Cet histogramme montre combien d'années de vie sont perdues pour chaque intervalle de concentration de PM2.5. ",
+                "Plus la concentration est élevée, plus l'impact sur l'espérance de vie est important. ",
+                "Les données sont basées sur la méthodologie AQLI (Air Quality Life Index)."
+            ], style={'textAlign': 'center', 'maxWidth': '800px', 'margin': '0 auto 1rem', 
+                     'color': '#005093', 'fontSize': '14px'}),
+            html.Div([
+                html.Span([
+                    "Rappel : Norme OMS = 5 µg/m³ | ",
+                    "10 µg/m³ supplémentaires = environ 1 an de vie perdu"
+                ], style={'fontSize': '12px', 'color': '#666'})
+            ], style={'textAlign': 'center', 'marginBottom': '2rem'}),
+        ]),
+        dcc.Graph(id='histogram-years-lost', style={'height': '600px', 'maxWidth': '85%', 'margin': '0 auto'}),
+        
+        html.Div([
+            html.Div([
+                html.H4("Comment lire cet histogramme :", 
+                       style={'color': '#005093', 'marginBottom': '1rem'}),
+                html.Ul([
+                    html.Li([
+                        html.Strong("Axe horizontal (X) : "),
+                        "Tranches de concentration de PM2.5 (µg/m³). Par exemple, 0-5, 5-15, 15-25, etc."
+                    ]),
+                    html.Li([
+                        html.Strong("Axe vertical (Y) : "),
+                        "Nombre moyen d'années d'espérance de vie perdues pour les personnes vivant dans cette tranche de pollution."
+                    ]),
+                    html.Li([
+                        html.Strong("Couleur des barres : "),
+                        "Dégradé du vert (impact faible) au rouge foncé (impact grave). Plus c'est rouge, plus c'est dangereux."
+                    ]),
+                    html.Li([
+                        html.Strong("Ligne verte pointillée : "),
+                        "Représente la norme OMS (5 µg/m³). En dessous de ce seuil, l'impact est considéré comme négligeable."
+                    ])
+                ], style={'color': '#005093', 'lineHeight': '2'}),
+                
+                html.Hr(style={'margin': '1.5rem 0', 'border': '1px solid #005093'}),
+                
+                html.H4("Ce qu'on peut en déduire :", 
+                       style={'color': '#005093', 'marginTop': '1.5rem', 'marginBottom': '1rem'}),
+                html.Ul([
+                    html.Li([
+                        html.Strong("Relation directe : "),
+                        "Plus la concentration de PM2.5 est élevée, plus on perd d'années de vie. La relation est quasi-linéaire."
+                    ]),
+                    html.Li([
+                        html.Strong("Impact cumulatif : "),
+                        "Vivre toute sa vie dans une zone à 50 µg/m³ peut réduire l'espérance de vie de 4-5 ans par rapport à la norme OMS."
+                    ]),
+                    html.Li([
+                        html.Strong("Zones critiques : "),
+                        "Les barres rouges (>100 µg/m³) montrent des situations d'urgence sanitaire où les populations perdent plus de 8 ans d'espérance de vie."
+                    ]),
+                    html.Li([
+                        html.Strong("Effet seuil : "),
+                        "En dessous de 5 µg/m³ (norme OMS), l'impact sur la santé devient très faible, d'où l'importance de respecter cette norme."
+                    ])
+                ], style={'color': '#005093', 'lineHeight': '2'}),
+                
+                html.Hr(style={'margin': '1.5rem 0', 'border': '1px solid #005093'}),
+                
+                html.H4("Mise en perspective :", 
+                       style={'color': '#005093', 'marginTop': '1.5rem', 'marginBottom': '1rem'}),
+                html.P([
+                    "Pour donner un ordre d'idée, la pollution aux PM2.5 réduit l'espérance de vie mondiale de ",
+                    html.Strong("2,3 ans en moyenne", style={'color': '#DC2626'}),
+                    ". C'est plus que l'alcool (1,6 an), les accidents de la route (0,7 an) ou le terrorisme (0,01 an). ",
+                    "Dans certaines régions comme le nord de l'Inde ou l'est de la Chine, la perte peut dépasser ",
+                    html.Strong("6 ans", style={'color': '#7F1D1D'}),
+                    "."
+                ], style={'color': '#005093', 'fontSize': '14px', 'lineHeight': '1.8', 'fontStyle': 'italic'})
+            ], style={
+                'maxWidth': '900px',
+                'margin': '2rem',
+                'padding': '2rem',
+                'backgroundColor': '#f8f9fa',
+                'borderRadius': '10px',
+                'border': '2px solid #005093'
+            })
+        ],  style={'display': 'flex',
+                 'justifyContent' : 'center'})
+    ], style={'margin': '2rem'})
