@@ -120,7 +120,7 @@ def create_years_lost_histogram_section():
                 ], style={'fontSize': '12px', 'color': '#666'})
             ], style={'textAlign': 'center', 'marginBottom': '2rem'}),
         ]),
-        dcc.Graph(id='histogram-years-lost', style={'height': '600px'}),
+        dcc.Graph(id='histogram-years-lost', style={'height': '600px', 'maxWidth': '85%', 'margin': '0 auto'}),
         
         html.Div([
             html.Div([

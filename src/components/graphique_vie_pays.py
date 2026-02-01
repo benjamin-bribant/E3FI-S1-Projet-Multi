@@ -130,7 +130,7 @@ def create_life_expectancy_section():
         html.Div([
             dcc.Graph(
                 id='life-expectancy-chart',
-                style={'height': '600px'}
+                style={'height': '600px', 'maxWidth': '85%', 'margin': '0 auto'}
             )
         ], style={'margin': '2rem'}),
         
