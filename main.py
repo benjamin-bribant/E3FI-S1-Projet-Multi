@@ -18,7 +18,7 @@ import pycountry
 from functools import lru_cache
 from flask_caching import Cache
 
-app = Dash(__name__)
+app = Dash(__name__, title="World Air Quality")
 
 # Configuration du cache
 cache = Cache(app.server, config={
