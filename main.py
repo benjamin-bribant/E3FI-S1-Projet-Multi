@@ -7,7 +7,7 @@ Période : 2016–2025
 Polluants : PM2.5, PM10, CO, NO2, SO2, O3.
 """
 
-from dash import Dash, dcc, ctx, html, Input, Output
+from dash import Dash, dcc, ctx, html, Input, Output, State
 from src.components.footer import create_footer
 from src.components.navbar import create_navbar
 from src.components.graphique_vie_pays import create_life_expectancy_graph, create_life_expectancy_section
@@ -36,7 +36,6 @@ def load_geojson_data():
 
     :returns geopandas.GeoDataFrame: DataFrame enrichi avec les colonnes year, lat et lon
     """
-    print("Chargement des données depuis le fichier...")
     data = gpd.read_file("data/cleaned/cleaneddata.geojson")
     data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
     data['year'] = data['measurements_lastupdated'].dt.year
@@ -474,19 +473,26 @@ def update_years_lost_histogram(selected_year):
 @app.callback(
     Output('year-slider', 'value'),
     [Input('interval', 'n_intervals')],
-    prevent_initial_call=False
+    [State('year-slider', 'value')],
+    prevent_initial_call=True
 )
-def animate_slider(n):
+def animate_slider(n, current_year):
     """
     Anime automatiquement le slider d'année en boucle lorsque la lecture est active.
 
-    :param n int: Nombre de tiques écoulées depuis le démarrage de l'intervalle, None à l'initialisation
-    :returns int: Année à afficher sur le slider, calculée par modulo sur les années disponibles
+    :param n int: Nombre de tiques écoulées depuis le démarrage de l'intervalle
+    :param current_year int: Année actuellement sélectionnée sur le slider
+    :returns int: Année suivante à afficher sur le slider
     """
     years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
-    if n is None:
-        return years[0]
-    return years[n % len(years)]
+    
+    try:
+        current_index = years.index(current_year)
+    except ValueError:
+        current_index = 0
+    
+    next_index = (current_index + 1) % len(years)
+    return years[next_index]
 
 @app.callback(
     [Output("interval", "disabled"),
@@ -504,8 +510,6 @@ def play_pause(n_clicks):
     if n_clicks is None or n_clicks == 0:
         return True, "▶ Play"
     
-    # Si le nombre de clics est impair = Playing
-    # Si pair = Paused
     is_playing = (n_clicks % 2) == 1
     
     if is_playing:
