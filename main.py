@@ -2,7 +2,6 @@ from dash import Dash, dcc, ctx, html, Input, Output, State
 from src.components.footer import create_footer
 from src.components.navbar import create_navbar
 from src.components.graphique_vie_pays import create_life_expectancy_graph, create_life_expectancy_section
-from src.components.histo_pollution import create_pollution_histogram, create_pollution_histogram_section
 from src.components.histo_annee_perdue import create_years_lost_histogram, create_years_lost_histogram_section
 import geopandas as gpd
 import pandas as pd
@@ -342,9 +341,6 @@ app.layout = html.Div([
         # Section GRAPHIQUES
         html.Div([
             
-            # Histogramme distribution pollution
-            create_pollution_histogram_section(),
-            
             # Histogramme années perdues
             create_years_lost_histogram_section(),
             
@@ -390,27 +386,6 @@ def toggle_sections(carte_clicks, graphiques_clicks):
 def update_life_expectancy(selected_year):
     """Met à jour le graphique d'espérance de vie selon l'année"""
     return create_life_expectancy_graph(year=selected_year)
-
-
-# Callback pour l'histogramme de distribution de pollution
-@app.callback(
-    Output('histogram-pollution', 'figure'),
-    [Input('year-slider', 'value'),
-     Input('btn-pm25', 'n_clicks'),
-     Input('btn-pm10', 'n_clicks'),
-     Input('btn-co', 'n_clicks'),
-     Input('btn-no2', 'n_clicks'),
-     Input('btn-so2', 'n_clicks'),
-     Input('btn-o3', 'n_clicks')]
-)
-def update_histogram(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, so2_clicks, o3_clicks):
-    """Met à jour l'histogramme de distribution selon l'année et les polluants sélectionnés"""
-    global selected_pollutants
-    
-    # Si aucun polluant sélectionné, afficher tous
-    pollutants_to_show = list(selected_pollutants) if len(selected_pollutants) > 0 else None
-    
-    return create_pollution_histogram(year=selected_year, selected_pollutants=pollutants_to_show)
 
 
 # Callback pour l'histogramme des années perdues selon PM2.5

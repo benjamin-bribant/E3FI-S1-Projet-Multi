@@ -104,15 +104,18 @@ def create_life_expectancy_section():
     :returns html.Div: Section HTML avec titre, description et graphique
     """
     return html.Div([
-        html.H2("Analyse de l'Impact sur l'Espérance de Vie", 
+        html.H2("Dividende d'Espérance de Vie par Région du Monde", 
                 style={'textAlign': 'center', 'color': '#005093', 'marginTop': '2rem'}),
         
         html.Div([
             html.P([
                 "Ce graphique transforme une mesure chimique abstraite (PM2.5) en une donnée humaine tangible : ",
                 html.Strong("le temps de vie perdu."),
-                " Il permet de comparer l'impact de la pollution de l'air par rapport à d'autres facteurs de risque."
-            ], style={'textAlign': 'center', 'maxWidth': '800px', 'margin': '0 auto 2rem', 
+                " Il montre combien d'années les populations de chaque région gagneraient si la pollution aux PM2.5 ",
+                "respectait les normes de l'OMS (5 µg/m³). C'est ce qu'on appelle le ",
+                html.Strong("\"dividende d'espérance de vie\""),
+                " : le bénéfice sanitaire potentiel d'une amélioration de la qualité de l'air."
+            ], style={'textAlign': 'center', 'maxWidth': '900px', 'margin': '0 auto 1rem', 
                      'color': '#005093', 'fontSize': '14px'}),
             
             html.Div([
@@ -133,15 +136,85 @@ def create_life_expectancy_section():
         
         html.Div([
             html.Div([
-                html.H4("Pour résumer ce graphique :", 
+                html.H4("Comment lire ce graphique :", 
                        style={'color': '#005093', 'marginBottom': '1rem'}),
                 html.Ul([
-                    html.Li("Les régions d'Asie du Sud et de l'Est sont parmi les plus touchées"),
-                    html.Li("Atteindre les normes OMS permettrait de gagner plusieurs années de vie"),
-                    html.Li("Les disparités régionales sont considérables")
-                ], style={'color': '#005093', 'lineHeight': '2'})
+                    html.Li([
+                        html.Strong("Barres horizontales : "),
+                        "Chaque barre représente une région géographique du monde (Asie du Sud, Europe, Amérique du Nord, etc.)."
+                    ]),
+                    html.Li([
+                        html.Strong("Longueur des barres : "),
+                        "Indique le nombre d'années d'espérance de vie gagnées si la pollution PM2.5 atteignait les normes OMS. ",
+                        "Plus la barre est longue, plus le gain potentiel est important."
+                    ]),
+                    html.Li([
+                        html.Strong("Couleur des barres : "),
+                        "Dégradé de bleu du clair au foncé. Les couleurs sombres indiquent les régions avec le plus fort potentiel de gain."
+                    ]),
+                    html.Li([
+                        html.Strong("Au survol : "),
+                        "Vous pouvez voir le nombre d'années exactes, la concentration moyenne de PM2.5, et le nombre de mesures utilisées."
+                    ])
+                ], style={'color': '#005093', 'lineHeight': '2'}),
+                
+                html.Hr(style={'margin': '1.5rem 0', 'border': '1px solid #005093'}),
+                
+                html.H4("Ce que révèle ce graphique :", 
+                       style={'color': '#005093', 'marginTop': '1.5rem', 'marginBottom': '1rem'}),
+                html.Ul([
+                    html.Li([
+                        html.Strong("Inégalités mondiales : "),
+                        "Les régions d'Asie du Sud et de l'Est sont les plus impactées, avec des gains potentiels de 3 à 6 ans d'espérance de vie. ",
+                        "À l'inverse, l'Europe occidentale et l'Amérique du Nord ont des gains plus faibles (<1 an)."
+                    ]),
+                    html.Li([
+                        html.Strong("Priorités d'action : "),
+                        "Les régions avec les barres les plus longues devraient être prioritaires pour les politiques de réduction de la pollution. ",
+                        "L'impact sanitaire y serait maximal."
+                    ]),
+                    html.Li([
+                        html.Strong("Justice environnementale : "),
+                        "Ce graphique illustre une injustice : les populations des pays en développement perdent plus d'années de vie à cause de la pollution, ",
+                        "alors qu'elles contribuent historiquement moins aux émissions globales."
+                    ]),
+                    html.Li([
+                        html.Strong("Potentiel d'amélioration : "),
+                        "Même les régions avec de \"petites\" barres (comme l'Europe) peuvent gagner des centaines de milliers d'années de vie au total ",
+                        "grâce à leur population importante."
+                    ])
+                ], style={'color': '#005093', 'lineHeight': '2'}),
+                
+                html.Hr(style={'margin': '1.5rem 0', 'border': '1px solid #005093'}),
+                
+                html.H4("Comparaison avec d'autres facteurs de risque :", 
+                       style={'color': '#005093', 'marginTop': '1.5rem', 'marginBottom': '1rem'}),
+                html.P([
+                    "Pour mettre en perspective l'ampleur du problème, la pollution aux PM2.5 est ",
+                    html.Strong("le plus grand risque environnemental pour la santé humaine", style={'color': '#DC2626'}),
+                    " :"
+                ], style={'color': '#005093', 'fontSize': '14px', 'marginBottom': '1rem'}),
+                html.Ul([
+                    html.Li("Plus mortelle que le tabagisme passif (perte de 1,8 an)"),
+                    html.Li("Plus mortelle que la consommation d'alcool (perte de 1,6 an)"),
+                    html.Li("Plus mortelle que les accidents de la route (perte de 0,7 an)"),
+                    html.Li("Plus mortelle que les conflits et le terrorisme (perte de 0,3 an)")
+                ], style={'color': '#005093', 'lineHeight': '2', 'fontSize': '14px'}),
+                
+                html.Hr(style={'margin': '1.5rem 0', 'border': '1px solid #005093'}),
+                
+                html.H4("Message clé :", 
+                       style={'color': '#005093', 'marginTop': '1.5rem', 'marginBottom': '1rem'}),
+                html.P([
+                    "Si toutes les régions du monde respectaient la norme OMS de 5 µg/m³ de PM2.5, ",
+                    html.Strong("l'humanité gagnerait collectivement 2,3 ans d'espérance de vie en moyenne", style={'color': '#005093', 'fontSize': '16px'}),
+                    ". Cela représente des milliards d'années de vie gagnées au niveau mondial. ",
+                    "C'est un enjeu sanitaire majeur qui mérite autant d'attention que les grandes maladies infectieuses."
+                ], style={'color': '#005093', 'fontSize': '14px', 'lineHeight': '1.8', 
+                         'fontStyle': 'italic', 'padding': '1rem', 'backgroundColor': '#E3F2FD', 
+                         'borderRadius': '8px', 'border': '2px solid #005093'})
             ], style={
-                'maxWidth': '800px',
+                'maxWidth': '900px',
                 'margin': '2rem auto',
                 'padding': '2rem',
                 'backgroundColor': '#f8f9fa',
