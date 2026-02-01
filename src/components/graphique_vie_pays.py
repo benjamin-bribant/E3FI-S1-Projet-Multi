@@ -15,13 +15,11 @@ def create_life_expectancy_graph(year=None):
     :param year int: Année à filtrer (None pour toutes les années)
     :returns plotly.graph_objects.Figure: Graphique Plotly
     """
-    # Charger les données
+
     data = gpd.read_file("data/cleaned/cleaneddata.geojson")
     
-    # Filtrer uniquement PM2.5
     data = data[data['measurements_parameter'] == 'PM2.5']
     
-    # Filtrer par année si spécifié
     if year is not None:
         data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
         data = data[data['measurements_lastupdated'].dt.year == year]
@@ -29,7 +27,6 @@ def create_life_expectancy_graph(year=None):
     data['region'] = data['country'].apply(get_region)
     data['years_lost'] = data['measurements_value'].apply(calculate_years_lost)
     
-    # Grouper par région et calculer la moyenne
     regional_data = data.groupby('region').agg({
         'years_lost': 'mean',
         'measurements_value': 'mean',
@@ -38,14 +35,11 @@ def create_life_expectancy_graph(year=None):
     
     regional_data.columns = ['region', 'avg_years_lost', 'avg_pm25', 'nb_measurements']
     
-    # Filtrer les régions avec données significatives et trier
     regional_data = regional_data[regional_data['region'] != 'Autre']
     regional_data = regional_data.sort_values('avg_years_lost', ascending=True)
     
-    # Créer le graphique
     fig = go.Figure()
     
-    # Palette de couleurs avec style du dashboard
     colors = ['#005093', '#0A83E5', '#2297F6', '#45A4F2', '#78BEF8', 
               '#9DCCF3', '#C3E1F6', '#0D72CA', '#0E5EAE', '#0D4C94']
     

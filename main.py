@@ -1,3 +1,11 @@
+"""
+main.py - Dashboard principal pour la visualisation de la qualité de l'air mondial.
+
+Affiche une carte interactive avec les données de pollution atmosphérique,
+ainsi que des graphiques sur l'espérance de vie et les années de vie perdues.
+Période : 2016–2025
+Polluants : PM2.5, PM10, CO, NO2, SO2, O3.
+"""
 from dash import Dash, dcc, ctx, html, Input, Output, State
 from src.components.footer import create_footer
 from src.components.navbar import create_navbar
@@ -19,10 +27,15 @@ cache = Cache(app.server, config={
     'CACHE_DEFAULT_TIMEOUT': 300  # 5 minutes
 })
 
-
 @cache.memoize(timeout=3600) 
 def load_geojson_data():
-    """Charge et cache les données GeoJSON"""
+    """
+    Charge les données GeoJSON depuis le fichier source et les met en cache.
+    Dérive les colonnes year, lat et lon depuis les métadonnées existantes.
+    Mise en cache pendant 1h.
+
+    :returns geopandas.GeoDataFrame: DataFrame enrichi avec les colonnes year, lat et lon
+    """
     print("Chargement des données depuis le fichier...")
     data = gpd.read_file("data/cleaned/cleaneddata.geojson")
     data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
@@ -33,7 +46,13 @@ def load_geojson_data():
 
 @lru_cache(maxsize=128)
 def iso2_to_iso3(iso2_code):
-    """Cache la conversion ISO-2 vers ISO-3"""
+    """
+    Convertit un code pays ISO 3166-1 alpha-2 en alpha-3.
+    Le résultat est mis en cache.
+
+    :param iso2_code str: Code pays sur deux lettres (ex. 'FR', 'US')
+    :returns str Code pays sur trois lettres (ex. 'FRA'), ou None si non reconnu
+    """
     try:
         return pycountry.countries.get(alpha_2=iso2_code).alpha_3
     except:
@@ -41,7 +60,12 @@ def iso2_to_iso3(iso2_code):
 
 @cache.memoize(timeout=3600)
 def get_all_countries_df():
-    """Cache la liste de tous les pays du monde"""
+    """
+    Génère un DataFrame contenant tous les pays du monde selon pycountry.
+    Mise en cache pendant 1h.
+
+    :returns pandas.DataFrame: DataFrame avec les colonnes country_iso3 (alpha-3) et country_name (nom officiel)
+    """
     all_countries = []
     for country in pycountry.countries:
         all_countries.append({
@@ -52,7 +76,15 @@ def get_all_countries_df():
 
 @cache.memoize(timeout=600)
 def get_filtered_data(year, pollutants_tuple):
-    """Cache les données filtrées par année et polluants"""
+    """
+    Filtre les données de pollution par année et, optionnellement, par polluants.
+    Le type tuple (immuable) est requis pour pollutants_tuple pour permettre la mise en cache.
+    Mise en cache pendant 10min.
+
+    :param year int: Année de mesure souhaitée (ex. 2020)
+    :param pollutants_tuple tuple Tuple trié des polluants à retenir (ex. ('NO2', 'PM2.5')), ou None pour aucun filtre
+    :returns geopandas.GeoDataFrame: Sous-ensemble des données filtré selon les critères fournis
+    """
     data = load_geojson_data()
     data_filtered = data[data['year'] == year].copy()
     
@@ -64,7 +96,15 @@ def get_filtered_data(year, pollutants_tuple):
 
 @cache.memoize(timeout=600)
 def calculate_country_pollution(year, pollutants_tuple):
-    """Cache les calculs de pollution par pays"""
+    """
+    Calcule la pollution moyenne par pays pour une année et des polluants donnés.
+    Les pays dont le code ISO-2 ne peut pas être converti en ISO-3 sont supprimés.
+    Mise en cache pendant 10min.
+
+    :param year int: Année de mesure souhaitée
+    :param pollutants_tuple tuple  Tuple trié des polluants à considérer, ou None pour tous
+    :returns pandas.DataFrame: DataFrame avec les colonnes country (ISO-2), avg_pollution (moyenne en µg/m³) et country_iso3 (ISO-3)
+    """
     data = get_filtered_data(year, pollutants_tuple)
     
     pollution_by_country = data.groupby('country')['measurements_value'].mean().reset_index()
@@ -76,6 +116,12 @@ def calculate_country_pollution(year, pollutants_tuple):
 
 
 def get_color_by_pollutant(pollutant):
+    """
+    Retourne la couleur hexadécimale associée à un polluant.
+
+    :param pollutant str: Nom du polluant (ex. 'PM2.5', 'O3')
+    :returns str: Code couleur hexadécimal (ex. '#EF4444'), ou '#6B7280' (gris) si polluant inconnu
+    """
     colors = {
         'PM2.5': '#EF4444',
         'PM10': '#F97316',
@@ -88,6 +134,14 @@ def get_color_by_pollutant(pollutant):
 
 
 def get_pollution_level(pollutant, value):
+    """
+    Détermine le niveau qualitatif de pollution selon les seuils recommandés.
+    Classifie la valeur en quatre niveaux : Bon, Moyen, Mauvais ou Très mauvais.
+
+    :param pollutant str: Nom du polluant (ex. 'PM2.5', 'NO2')
+    :param value float: Valeur mesurée dans l'unité associée au polluant
+    :returns str: Niveau 'Bon', 'Moyen', 'Mauvais', 'Très mauvais', ou 'Inconnu' si le polluant n'est pas référencé
+    """
     thresholds = {
         'PM2.5': [15, 35, 55],
         'PM10': [50, 100, 150],
@@ -113,21 +167,26 @@ def get_pollution_level(pollutant, value):
 
 @cache.memoize(timeout=600)
 def create_map(year, pollutants_tuple):
-    """Crée la carte Plotly avec fond bleu et points de pollution (avec cache)"""
+    """
+    Construit la carte chloroplète Plotly.
+    Mise en cache pendant 10min.
+
+    :param year int: Année pour laquelle les données sont affichées
+    :param pollutants_tuple tuple Tuple trié des polluants sélectionnés, ou None si aucun filtre
+    :returns plotly.graph_objects.Figure: Figure Plotly prête à être rendue dans un dcc.Graph
+    """
     
     # Récupérer les données depuis le cache
     data = get_filtered_data(year, pollutants_tuple)
     pollution_by_country = calculate_country_pollution(year, pollutants_tuple)
     all_countries_df = get_all_countries_df()
     
-    # Fusionner avec les données de pollution (left join pour garder tous les pays)
     world_pollution = all_countries_df.merge(
         pollution_by_country[['country_iso3', 'avg_pollution']], 
         on='country_iso3', 
         how='left'
     )
     
-    # Remplacer les NaN par 0 pour les pays sans données
     world_pollution['avg_pollution'] = world_pollution['avg_pollution'].fillna(0)
     
     colorscale = [
@@ -144,14 +203,11 @@ def create_map(year, pollutants_tuple):
         [1.0, "#093981"],
     ]
     
-    # Utiliser les vraies valeurs min/max (sans les 0)
     zmin = pollution_by_country["avg_pollution"].min()
     zmax = pollution_by_country["avg_pollution"].max()
     
-    # Créer une figure vide
     fig = go.Figure()
     
-    # Ajouter le choropleth avec TOUS les pays
     fig.add_trace(go.Choropleth(
         locations=world_pollution['country_iso3'],
         z=world_pollution['avg_pollution'],
@@ -166,7 +222,6 @@ def create_map(year, pollutants_tuple):
         showlegend=False
     ))
     
-    # Préparer les données des points (optimisé avec vectorisation)
     data['level'] = data.apply(lambda row: get_pollution_level(row['measurements_parameter'], row['measurements_value']), axis=1)
     data['hover_text'] = data.apply(lambda row: 
         f"<b>{row.get('location', 'Localisation inconnue')}</b><br>" +
@@ -177,7 +232,6 @@ def create_map(year, pollutants_tuple):
         axis=1
     )
     
-    # Ajouter les points de pollution par type de polluant
     for pollutant in data['measurements_parameter'].unique():
         pollutant_data = data[data['measurements_parameter'] == pollutant]
         
@@ -196,7 +250,6 @@ def create_map(year, pollutants_tuple):
             hovertemplate='%{text}<extra></extra>'
         ))
     
-    # Mise en page
     fig.update_geos(
         projection_type="natural earth",
         visible=False,
@@ -220,14 +273,11 @@ def create_map(year, pollutants_tuple):
     return fig
 
 
-
-# Variable globale pour stocker les polluants sélectionnés
 selected_pollutants = set()
 
 app.layout = html.Div([
     html.H1("Dashboard - World Air Quality", style={'text-align':'center'}, className="page-title"),
     
-    # Store pour gérer l'onglet actif
     dcc.Store(id='active-tab', data='carte'),
     
     create_navbar(),
@@ -258,7 +308,6 @@ app.layout = html.Div([
                 ),
             ], style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
             
-            # Section CARTE
             html.Div([
                 html.Div([
                     html.Div([
@@ -338,13 +387,10 @@ app.layout = html.Div([
             ], id="carte-section"),
         ]),
         
-        # Section GRAPHIQUES
         html.Div([
             
-            # Histogramme années perdues
             create_years_lost_histogram_section(),
             
-            # Graphique espérance de vie
             create_life_expectancy_section(),
             
         ], id='graphiques-section', style={'display': 'none'}),
@@ -355,8 +401,6 @@ app.layout = html.Div([
 ])
 
 
-
-# Callback pour gérer l'affichage des sections
 @app.callback(
     [Output('carte-section', 'style'),
      Output('graphiques-section', 'style')],
@@ -365,46 +409,64 @@ app.layout = html.Div([
     prevent_initial_call=True
 )
 def toggle_sections(carte_clicks, graphiques_clicks):
-    # Déterminer quel bouton a été cliqué
+    """
+    Bascule l'affichage entre la section carte et la section graphiques.
+
+    :param carte_clicks int: Nombre de clics sur le bouton de navigation 'Carte'
+    :param graphiques_clicks int: Nombre de clics sur le bouton de navigation 'Graphiques'
+    :returns tuple[dict, dict]: Styles CSS pour carte-section puis graphiques-section
+    """
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         
         if button_id == 'nav-graphiques':
             return {'display': 'none'}, {'display': 'block'}
-        else:  # nav-carte
+        else:
             return {'display': 'block'}, {'display': 'none'}
     
-    # Par défaut, afficher la carte
     return {'display': 'block'}, {'display': 'none'}
 
 
-# Callback pour le graphique d'espérance de vie
 @app.callback(
     Output('life-expectancy-chart', 'figure'),
     [Input('year-slider', 'value')]
 )
 def update_life_expectancy(selected_year):
-    """Met à jour le graphique d'espérance de vie selon l'année"""
+    """
+    Met à jour le graphique d'espérance de vie selon l'année sélectionnée.
+
+    :param selected_year int: Année choisie via le slider (entre 2016 et 2025)
+    :returns plotly.graph_objects.Figure: Graphique Plotly d'espérance de vie par pays
+    """
     return create_life_expectancy_graph(year=selected_year)
 
 
-# Callback pour l'histogramme des années perdues selon PM2.5
 @app.callback(
     Output('histogram-years-lost', 'figure'),
     [Input('year-slider', 'value')]
 )
 def update_years_lost_histogram(selected_year):
-    """Met à jour l'histogramme des années perdues selon l'année"""
+    """
+    Met à jour l'histogramme des années de vie perdues selon l'année sélectionnée.
+
+    :param selected_year int: Année choisie via le slider (entre 2016 et 2025)
+    :returns plotly.graph_objects.Figure: Histogramme Plotly de la distribution des années perdues
+    """
     return create_years_lost_histogram(year=selected_year)
 
 
-# Callback pour l'animation du slider
 @app.callback(
     Output('year-slider', 'value'),
     [Input('interval', 'n_intervals')],
     prevent_initial_call=False
 )
 def animate_slider(n):
+    """
+    Anime automatiquement le slider d'année en boucle lorsque la lecture est active.
+
+    :param n int: Nombre de tiques écoulées depuis le démarrage de l'intervalle, None à l'initialisation
+    :returns int: Année à afficher sur le slider, calculée par modulo sur les années disponibles
+    """
     years = [2016, 2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025]
     if n is None:
         return years[0]
@@ -416,6 +478,13 @@ def animate_slider(n):
     Input("pause-btn", "n_clicks"),
 )
 def play_pause(play_clicks, pause_clicks):
+    """
+    Active ou désactive l'animation automatique du slider.
+
+    :param play_clicks int: Nombre total de clics sur le bouton 'Play'
+    :param pause_clicks int: Nombre total de clics sur le bouton 'Pause'
+    :returns bool: False si l'intervalle doit être actif (lecture), True pour pause
+    """
     if play_clicks > pause_clicks:
         return False 
     return True       
@@ -440,11 +509,22 @@ def play_pause(play_clicks, pause_clicks):
      Input('btn-o3', 'n_clicks')]
 )
 def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, so2_clicks, o3_clicks):
-    """Met à jour la carte en fonction de l'année et des polluants sélectionnés"""
+    """
+    Callback central : met à jour la carte, les KPIs, le tableau de classement Top 5
+    et les styles des boutons de polluants selon l'année et les filtres actifs.
+
+    :param selected_year int: Année choisie via le slider
+    :param pm25_clicks int: Nombre de clics sur le bouton PM2.5
+    :param pm10_clicks int: Nombre de clics sur le bouton PM10
+    :param co_clicks int: Nombre de clics sur le bouton CO
+    :param no2_clicks int: Nombre de clics sur le bouton NO2
+    :param so2_clicks int: Nombre de clics sur le bouton SO2
+    :param o3_clicks int: Nombre de clics sur le bouton O3
+    :returns tuple: Figure carte, nombre de pays (str), affichage polluant, tableau HTML Top 5, puis 6 dicts de styles CSS pour les boutons
+    """
     
     global selected_pollutants
     
-    # Déterminer quel bouton a été cliqué
     if ctx.triggered:
         button_id = ctx.triggered[0]['prop_id'].split('.')[0]
         pollutant_map = {
@@ -463,16 +543,12 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
             else:
                 selected_pollutants.add(pollutant)
     
-    # Convertir en tuple pour le cache (les sets ne sont pas hashables)
     pollutants_tuple = tuple(sorted(selected_pollutants)) if len(selected_pollutants) > 0 else None
     
-    # Récupérer les données filtrées (depuis le cache)
     data_filtered = get_filtered_data(selected_year, pollutants_tuple)
     
-    # Calculer le nombre de pays uniques
     nb_pays = data_filtered['country'].nunique()
     
-    # Créer l'affichage des polluants avec couleurs
     if pollutants_tuple:
         polluant_display = []
         for i, pollutant in enumerate(sorted(pollutants_tuple)):
@@ -485,7 +561,6 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     else:
         polluant_display = "Tous"
     
-    # Calculer le top 5 des pays les plus pollués
     top_countries = data_filtered.groupby(['country', 'country_name_en']).agg({
         'measurements_value': 'mean',
         'measurements_unit': 'first',
@@ -494,7 +569,6 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
     
     top_countries = top_countries.sort_values('measurements_value', ascending=False).head(5)
     
-    # Créer le tableau HTML
     table_rows = []
     for idx, row in top_countries.iterrows():
         rank = len(table_rows) + 1
@@ -526,11 +600,16 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
         html.Tbody(table_rows)
     ])
     
-    # Créer la carte (depuis le cache si disponible)
     fig = create_map(selected_year, pollutants_tuple)
     
-    # Créer les styles pour chaque bouton
     def get_button_style(pollutant):
+        """
+        Génère le style CSS d'un bouton de sélection de polluant.
+        Fond coloré si actif, fond blanc avec bordure colorée sinon.
+
+        :param pollutant str: Nom du polluant associé au bouton
+        :returns dict: Dictionnaire de styles CSS
+        """
         color = get_color_by_pollutant(pollutant)
         is_selected = pollutant in selected_pollutants
         
@@ -547,7 +626,6 @@ def update_map(selected_year, pm25_clicks, pm10_clicks, co_clicks, no2_clicks, s
             'cursor': 'pointer'
         }
     
-    # Générer les styles
     styles = [
         get_button_style('PM2.5'),
         get_button_style('PM10'),

@@ -15,25 +15,20 @@ def create_years_lost_histogram(year):
     :param year int: Année à filtrer
     :returns plotly.graph_objects.Figure: Graphique Plotly
     """
-    # Charger les données
     data = gpd.read_file("data/cleaned/cleaneddata.geojson")
     data['measurements_lastupdated'] = pd.to_datetime(data['measurements_lastupdated'])
     
-    # Filtrer par année et PM2.5 uniquement
     data_filtered = data[
         (data['measurements_lastupdated'].dt.year == year) &
         (data['measurements_parameter'] == 'PM2.5')
     ]
     
-    # Calculer les années perdues pour chaque mesure
     data_filtered['years_lost'] = data_filtered['measurements_value'].apply(calculate_years_lost)
     
-    # Créer des intervalles de PM2.5
     bins = [0, 5, 15, 25, 35, 50, 75, 100, 150, 200, 500]
     labels = ['0-5', '5-15', '15-25', '25-35', '35-50', '50-75', '75-100', '100-150', '150-200', '200+']
     data_filtered['pm25_range'] = pd.cut(data_filtered['measurements_value'], bins=bins, labels=labels, include_lowest=True)
     
-    # Grouper par intervalle et calculer la moyenne des années perdues
     range_stats = data_filtered.groupby('pm25_range', observed=True).agg({
         'years_lost': 'mean',
         'measurements_value': 'count'
@@ -41,10 +36,8 @@ def create_years_lost_histogram(year):
     
     range_stats.columns = ['pm25_range', 'avg_years_lost', 'count']
     
-    # Créer l'histogramme
     fig = go.Figure()
     
-    # Couleurs progressives du bleu au rouge selon la gravité
     colors_gradient = ['#10B981', '#06B6D4', '#3B82F6', '#005093', '#F97316', '#EF4444', '#DC2626', '#991B1B', '#7F1D1D', '#450A0A']
     
     fig.add_trace(go.Bar(
@@ -85,7 +78,6 @@ def create_years_lost_histogram(year):
         margin=dict(l=80, r=50, t=80, b=100)
     )
     
-    # Ajouter une ligne horizontale pour la norme OMS (0 années perdues à 5 µg/m³)
     fig.add_hline(
         y=0,
         line_dash="dash",
