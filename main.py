@@ -6,6 +6,7 @@ ainsi que des graphiques sur l'espérance de vie et les années de vie perdues.
 Période : 2016–2025
 Polluants : PM2.5, PM10, CO, NO2, SO2, O3.
 """
+
 from dash import Dash, dcc, ctx, html, Input, Output
 from src.components.footer import create_footer
 from src.components.navbar import create_navbar
@@ -295,9 +296,11 @@ app.layout = html.Div([
                 ),
 
                 html.Div([
-                    html.Button("Play", id="play-btn", n_clicks=0),
-                    html.Button("Pause", id="pause-btn", n_clicks=0),
-                ]),
+                    html.Button([
+                        "▶ Play"
+                    ], id="play-pause-btn", n_clicks=0, className="play-pause-btn"),
+                    
+                ], className="play-pause-container"),
 
                 dcc.Interval(
                     id="interval",
@@ -305,7 +308,7 @@ app.layout = html.Div([
                     n_intervals=0,
                     max_intervals=-1  
                 ),
-            ], style={'display': 'flex', 'justify-content': 'center', 'margin':'3rem'}),
+            ], style={'display': 'flex', 'justify-content': 'center', 'alignItems':'center' ,'margin':'3rem'}),
             
             html.Div([
                 html.Div([
@@ -320,10 +323,15 @@ app.layout = html.Div([
                 ], style={'display': 'flex', 'justify-content': 'space-evenly', 'margin':'3rem'}),
                 
                 html.Div([
-                    dcc.Graph(
-                        id="carte",
-                        style={'height': '600px'}
-                    )
+                    dcc.Loading(
+                        id="loading-carte",
+                        type="circle",
+                        children=[
+                            dcc.Graph(
+                                id="carte",
+                                style={'height': '600px'}
+                            )
+                        ], style={'margin': '2rem'})
                 ], style={'margin': '2rem'}),
                 
                 html.Div([
@@ -382,15 +390,24 @@ app.layout = html.Div([
                     ], className="buttons-polluants")
                 ], style={'display': 'flex', 'justify-content':'center'}, className="below-map"),
                 
-                html.Div(id="ranking-table", className="ranking"),
+                dcc.Loading(
+                    id="loading-ranking-table",
+                    type="circle",
+                    color="#005093",
+                    children=[html.Div(id="ranking-table", className="ranking")])
             ], id="carte-section"),
         ]),
         
         html.Div([
+            dcc.Loading(
+                id="loading-histogram-years-lost",
+                type="circle",
+                children=[create_years_lost_histogram_section()]),
             
-            create_years_lost_histogram_section(),
-            
-            create_life_expectancy_section(),
+            dcc.Loading(
+                id="loading-expectancy-chart",
+                type="circle",
+                children=[create_life_expectancy_section()]),
             
         ], id='graphiques-section', style={'display': 'none'}),
         
@@ -472,21 +489,30 @@ def animate_slider(n):
     return years[n % len(years)]
 
 @app.callback(
-    Output("interval", "disabled"),
-    Input("play-btn", "n_clicks"),
-    Input("pause-btn", "n_clicks"),
+    [Output("interval", "disabled"),
+     Output("play-pause-btn", "children")],
+    [Input("play-pause-btn", "n_clicks")]
 )
-def play_pause(play_clicks, pause_clicks):
+def play_pause(n_clicks):
     """
     Active ou désactive l'animation automatique du slider.
 
-    :param play_clicks int: Nombre total de clics sur le bouton 'Play'
-    :param pause_clicks int: Nombre total de clics sur le bouton 'Pause'
-    :returns bool: False si l'intervalle doit être actif (lecture), True pour pause
+    :param n_clicks int: Nombre total de clics sur le bouton 'Play'/'Pause'
+    :returns bool: True si l'intervalle doit être actif (lecture) + changement du texte, True pour pause + changement du texte
     """
-    if play_clicks > pause_clicks:
-        return False 
-    return True       
+    
+    if n_clicks is None or n_clicks == 0:
+        return True, "▶ Play"
+    
+    # Si le nombre de clics est impair = Playing
+    # Si pair = Paused
+    is_playing = (n_clicks % 2) == 1
+    
+    if is_playing:
+        return False, "⏸ Pause"
+    else:
+        return True, "▶ Play"
+
 
 @app.callback(
     [Output('carte', 'figure'),

@@ -174,11 +174,12 @@ def create_years_lost_histogram_section():
                 ], style={'color': '#005093', 'fontSize': '14px', 'lineHeight': '1.8', 'fontStyle': 'italic'})
             ], style={
                 'maxWidth': '900px',
-                'margin': '2rem auto',
+                'margin': '2rem',
                 'padding': '2rem',
                 'backgroundColor': '#f8f9fa',
                 'borderRadius': '10px',
                 'border': '2px solid #005093'
             })
-        ])
+        ],  style={'display': 'flex',
+                 'justifyContent' : 'center'})
     ], style={'margin': '2rem'})

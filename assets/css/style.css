@@ -45,6 +45,37 @@ body {
     background-color: #d3d3d3 !important;
 }
 
+.play-pause-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1rem;
+    margin: 1rem 0;
+}
+
+.play-pause-btn {
+    padding: 0.8rem 2rem;
+    border: 2px solid #005093;
+    background: white;
+    color: #005093;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 120px;
+    justify-content: center;
+}
+
+.play-pause-btn:hover {
+    background: #005093;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 80, 147, 0.3);
+}
+
 .valeur-mesuree {
     font-weight: lighter;
     font-size: medium;

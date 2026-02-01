@@ -209,11 +209,12 @@ def create_life_expectancy_section():
                          'borderRadius': '8px', 'border': '2px solid #005093'})
             ], style={
                 'maxWidth': '900px',
-                'margin': '2rem auto',
+                'margin': '2rem',
                 'padding': '2rem',
                 'backgroundColor': '#f8f9fa',
                 'borderRadius': '10px',
                 'border': '2px solid #005093'
             })
-        ])
+        ], style={'display': 'flex',
+                 'justifyContent' : 'center'})
     ], style={'margin': '2rem'})
