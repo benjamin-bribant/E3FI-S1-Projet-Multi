@@ -135,32 +135,23 @@ E3FI-S1-Projet-Multi
 |           
 +---src
 |   +---components
-|   |   |   component.py
 |   |   |   footer.py
 |   |   |   graphique_vie_pays.py   # Graphique espérance de vie
-|   |   |   header.py
 |   |   |   histo_annee_perdue.py   # Histogramme années perdues
 |   |   |   navbar.py
 |   |   |   __init__.py
 |   |           
 |   +---pages
 |   |   |   __init__.py
-|   |   |   
-|   |   \---data
-|   |       \---raw
-|   |               rawdata.csv
-|   |               rawdata.geojson
 |   |               
 |   \---utils
 |       |   clean_data.py
-|       |   fonctions.py
 |       |   get_data.py
 |       |   mapping_region.py  # Mapping pays -> régions
 |       |   __init__.py
 |
 |   .env
 |   .gitignore
-|   config.py
 |   main.py
 |   README.md
 |   requirements.txt
