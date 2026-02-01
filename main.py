@@ -1,19 +1,18 @@
 """
-main.py - Dashboard principal pour la visualisation de la qualité de l'air mondial.
+Dashboard principal pour la visualisation de la qualité de l'air mondial.
 
 Affiche une carte interactive avec les données de pollution atmosphérique,
 ainsi que des graphiques sur l'espérance de vie et les années de vie perdues.
 Période : 2016–2025
 Polluants : PM2.5, PM10, CO, NO2, SO2, O3.
 """
-from dash import Dash, dcc, ctx, html, Input, Output, State
+from dash import Dash, dcc, ctx, html, Input, Output
 from src.components.footer import create_footer
 from src.components.navbar import create_navbar
 from src.components.graphique_vie_pays import create_life_expectancy_graph, create_life_expectancy_section
 from src.components.histo_annee_perdue import create_years_lost_histogram, create_years_lost_histogram_section
 import geopandas as gpd
 import pandas as pd
-import plotly.express as px
 import plotly.graph_objects as go
 import pycountry
 from functools import lru_cache
